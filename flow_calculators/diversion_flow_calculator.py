@@ -1,3 +1,20 @@
+
+# legacy rating curves (developed for MP2012) used for ungauged drainage basins in the Lake Pontchartrain region
+
+# These may need to be zeroed out due to new upland runoff model in upland compartments - likely all but the Orleans and Jefferson Parish and Violet basins are now in the upland Q values included in Precip boundary conditions.
+
+Mobile1 = 0.33*Pascagoula
+Mobile2 = 0.38*Pascagoula
+Jourdan = Wolf
+VioletRunoff = 0.35*np.mean(Amite + Natalbany + Tickfaw + Tchefuncte + Pearl)
+NE_LPO_Bonfouca = 2.7*Tangipahoa
+NE_LPO_OrleansParish = 4.05*Tangipahoa
+NE_LPO_JeffParish = 4.05*Tangipahoa
+SW_LPO = 4.05*Tangipahoa
+S_Maurepas = 1.01*Tangipahoa
+NE_LPO_LaCombe = 2.7*Tangipahoa
+
+
 # -*- coding: utf-8 -*-
 #"""
 #Created on Thu Jan 28 11:46:45 2021
@@ -895,20 +912,26 @@ for d in range(0,ndays):
     Bohe_cfs[d] = Qdiv  
     Bohe_cms[d] = Qdiv*(0.3048**3)
         
-    #########################
-    ###   Ostrica Lock    ###
-    #########################
+    #################################
+    ###   Ostrica & Neptune Pass  ###
+    #################################
     # river mile 25
-    # if input is less than 800,000 cfs, then 0 is diverted
-    # Diversion flow of rating curve 5.2/100*Qresidual at river flows above 800,000 cfs
+    # if input is less than 800,000 cfs, then 0 is diverted through original Ostrica
+    # Ostrica diversion flow of rating curve 5.2/100*Qresidual at river flows above 800,000 cfs
+    #
+    # at Neptune Pass, flow is assumed to be a constant 5% of the Mississippi River flow which represents the flows after USACE paritally closed the pass in spring 2026
+    # if modeling from 2019 through end of 2025, flow reached a maximum of ~19% of the River flow before USACE partially closed the opening in spring 2026
+    # 5% & 19% rules-of-thumb value comes from Mead Allison during MissDelta Field Team project calls February 2026
     
     if Qresidual < 800000:
-        Qdiv = 0
+        Qdiv_Ostr = 0
     else:
-        Qdiv = 5.2/100*Qresidual
-        
-    Ostr_cfs[d] = Qdiv  
-    Ostr_cms[d] = Qdiv*(0.3048**3)
+        Qdiv_Ostr = 5.2/100*Qresidual
+    
+    Qdiv_Neptune = 0.05*Qresidual
+    
+    Ostr_cfs[d] = Qdiv_Ostr + Qdiv_Neptune
+    Ostr_cms[d] = (Qdiv_Ostr + Qdiv_Neptune)*(0.3048**3)
 
     ############################
     ###   Fort St. Philip    ###
@@ -1092,7 +1115,7 @@ with open(TribQ_out_file,mode='w') as TribQ_out:
         line = '%s,%s' % (line,MBaD_cms[d])             # ncol 52 # Mid-Barataria Diversion
         line = '%s,%s' % (line,Naom_cms[d])             # ncol 53 # Naomi
         line = '%s,%s' % (line,WPLH_cms[d])             # ncol 54 # West Point a la Hache (including additional flow for Lower Plaquemines River Sediment Plan)
-        line = '%s,%s' % (line,LBaD_cms[d])             # ncol 55 # Lower Barataria iversion
+        line = '%s,%s' % (line,LBaD_cms[d])             # ncol 55 # Lower Barataria Diversion
         line = '%s,%s' % (line,LBrD_cms[d])             # ncol 56 # Lower Breton Diversion
         line = '%s,%s' % (line,MGPS_cms[d])             # ncol 57 # Mardi Gras Pass
         line = '%s,%s' % (line,Bohe_cms[d])             # ncol 58 # Bohemia
@@ -1105,8 +1128,8 @@ with open(TribQ_out_file,mode='w') as TribQ_out:
         line = '%s,%s' % (line,CGap_cms[d])             # ncol 65 # Cubits Gap
         line = '%s,%s' % (line,PLou_cms[d])             # ncol 66 # Pass A Loutre
         line = '%s,%s' % (line,SPas_cms[d])             # ncol 67 # South Pass
-        line = '%s,%s' % (line,SWPS_cms[d])             # ncol 68 # South West Pass calculated from curve (not used in model)
-        #line = '%s,%s' % (line,SWPR_cms[d])                       # South West Pass calculated from residual flow to close mass balance on Miss Riv flow in/out
+        #line = '%s,%s' % (line,SWPS_cms[d])             # ncol 68 # South West Pass calculated from curve (not used in model)
+        line = '%s,%s' % (line,SWPR_cms[d])             # ncol 68 # South West Pass calculated from residual flow to close mass balance on Miss Riv flow in/out
         line = '%s,%s' % (line,IAFT_cms[d])             # ncol 69 # Increase Atchafalaya Flows to Terrebonne
         line = '%s,%s' % (line,AtRD_cms[d])             # ncol 70 # Atchafalaya River Diversion
         #line = '%s,%s' % (line,LaBD_cms[d])                       # LaBranche Diversion
