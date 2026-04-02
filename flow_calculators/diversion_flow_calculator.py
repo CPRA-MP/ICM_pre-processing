@@ -45,8 +45,17 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 
+TribListFile = 'MP2029_TribQ_columns.csv'
+
+ObsQ_dir = '../observed_tributary_flows'
+
+# read in tributary list
+tribs = np.genfromtxt(TribListFile,usecols=1,skip_header=1,delimter=',',dtype='str')
+
+
+
 TribQ_in_file  = 'MP29_future_conditions_tributary_flows_2025_2079_ssp2-4.5.csv'
-TribQ_out_file = 'MP29_S10_G600_TribQ.csv'
+TribQ_out_file = 'MP29_ssp2-4.5_2025_2079_TribQ.csv'
 
 
 # Set implementation year (elapsed) for each diversion
