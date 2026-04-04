@@ -71,7 +71,5 @@ MP29 FWOAv25 TribQ Column,Tributary/Diversion Name,Type flag,Type,Sand_Rating_Cu
 66, Pass A Loutre,4,Pass-calculated,0,0,PLou,0,377,na
 67, South Pass,4,Pass-calculated,0,0,SPas,0,378,na
 68, South West Pass,4,Pass-calculated,0,0,SWPR,0,379,na
-69,Increase Atchafalaya Flows to Terrebonne,3,Diversion-calculated,0,0,IAFT,9999,890,na
-70,Atchafalaya River Diversion,3,Diversion-calculated,0,0,AtRD,9999,593,na
-,,,,,,,,,
-,,,,,,,,,
+69,Increase Atchafalaya Flows to Terrebonne,5,Diversion-calculated from Atchafalaya River flow,0,0,IAFT,9999,890,na
+70,Atchafalaya River Diversion,5,Diversion-calculated from Atchafalaya River flow,0,0,AtRD,9999,593,na

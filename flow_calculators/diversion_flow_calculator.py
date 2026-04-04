@@ -47,12 +47,44 @@ import matplotlib.pyplot as plt
 
 TribListFile = 'MP2029_TribQ_columns.csv'
 
-ObsQ_dir = '../observed_tributary_flows'
+ObsQ_dir = '../observed_tributary_flows/Data_Filled'
 
 # read in tributary list
-tribs = np.genfromtxt(TribListFile,usecols=1,skip_header=1,delimter=',',dtype='str')
+tribs = np.genfromtxt(TribListFile,usecols=1,skip_header=1,delimiter=',',dtype='str')
+tribs_files = np.genfromtxt(TribListFile,usecols=9,skip_header=1,delimiter=',',dtype='str')
+tribs_types = np.genfromtxt(TribListFile,usecols=2,skip_header=1,delimiter=',',dtype='int')
 
 
+nTributaries_null = 0              # number of riverine input timeseries that are no longer used in and set to zero values in in TribQ, TribF, TribS, and QMult
+nTributaries = 0                   # number of riverine input timeseries included in TribQ, TribF, TribS, and QMult
+nMissRiv_Diversions = 0            # number of Mississippi River diversion timeseries included in TribQ, TribF, TribS, and QMult
+nBFD_Passes = 0                    # number of distributary passes timeseries in the BFD included in TribQ, TribF, TribS, and QMult
+nAtchRiv_Diversions = 0            # number of Atchafalaya River diversion timeseries included in TribQ, TribF, TribS, and QMult
+
+for tt in tribs_types:
+    if tt == 0:
+        nTributaries_null += 1
+    if tt == 1:
+        nTributaries += 1
+    if tt == 2:
+        nMissRiv_Diversions += 1
+    if tt == 3:
+        nMissRiv_Diversions += 1
+    if tt == 4:
+        nBFD_Passes += 1
+    if tt == 5:
+        nAtchRiv_Diversions += 1        
+
+
+nTribs = nTributaries_null + nTributaries + nMissRiv_Diversions + nBFD_Passes + nAtchRiv_Diversions # total number of timeseries read in as tributary boundary conditions in TribQ
+
+
+for nf in range(0,len(tribs_files)):
+        file = tribs_files[nf]
+        type = tribs_types[nf]
+	f = '%s/%s' % (ObsQ_dir,file)
+	if file != 'na':
+            obsQ = np.genfromtxt(f,delimiter=',',skip_header=1,usecols=[0,1],dtype='str')
 
 TribQ_in_file  = 'MP29_future_conditions_tributary_flows_2025_2079_ssp2-4.5.csv'
 TribQ_out_file = 'MP29_ssp2-4.5_2025_2079_TribQ.csv'
@@ -92,12 +124,6 @@ implementation['LBaD'] = 9999       # Lower Barataria Diversion
 implementation['LBrD'] = 9999       # Lower Breton Diversion
 
 
-nTributaries = 35                   # number of riverine input timeseries included in TribQ, TribF, TribS, and QMult
-nMissRiv_Diversions = 21            # number of Mississippi River diversion timeseries included in TribQ, TribF, TribS, and QMult
-nBFD_Passes = 12                    # number of distributary passes timeseries in the BFD included in TribQ, TribF, TribS, and QMult
-nAtchRiv_Diversions = 2             # number of Atchafalaya River diversion timeseries included in TribQ, TribF, TribS, and QMult
-
-nTribs = nTributaries + nMissRiv_Diversions + nBFD_Passes + nAtchRiv_Diversions # total number of timeseries read in as tributary boundary conditions in TribQ
 
 trib_cols   = range(0,nTributaries) # first 35 columns of TribQ.csv are tributary flows; diversions start in column 36
 TribQ_in_date_col    = [nTribs]     # last column of input TribQ.csv is the date
