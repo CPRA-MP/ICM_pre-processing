@@ -46,15 +46,64 @@ import numpy as np
 from datetime import datetime as dt
 import matplotlib.pyplot as plt
 
-
+scenario = 'ssp2-4.5'
 TribListFile = 'MP2029_TribQ_columns.csv'
 
 ObsQ_dir = '../observed_tributary_flows/Data_Filled'
 obsQ_in_file = 'MP29_S00_G000_2006_2024_obsQ.csv'
-TribQ_in_file = 'MP29_future_conditions_tributary_flows_2025_2079_ssp2-4.5.csv'
+TribQ_in_file = 'MP29_future_conditions_tributary_flows_2025_2079_%s.csv' % scenario
 TribQ_out_file = 'MP29_ssp2-4.5_2025_2079_TribQ.csv'
+TribF_out_file = 'MP29_ssp2-4.5_2025_2079_TribF.csv'
+TribS_out_file =  'MP29_ssp2-4.5_2025_2079_TribS.csv'
 
 obs_years = range(2006,2025)
+
+flows_cms = np.genfromtxt(TribQ_out_file,delimiter=',',dtype='flt',skip_header=1,usecols=[0:-1]) #read in flows, skip date column and header row
+dates = np.genfromtxt(TribQ_out_file,delimiter=',',dtype='str',skip_header=1,usecols=[-1]) 
+
+for nday in range(0,len(dates)):
+    row = flows_cms(nday)    
+    for ntrib in range(0,len(row)):
+        q_cms = row[ntrib]
+        
+        tribcol = tribs_col[ntrib]
+        sand_type = sand_types[tribcol]
+        fines_type = fine_types[tribcol]
+
+        tpd2mgl = 1000*1000*1000/(q_cms*1000*86400)  # daily conversion factor for tonnes/day to mg/L
+
+        #########################################
+        # Suspended Sand Sediment Rating Curves #
+        #########################################
+        # Assume no suspended sand
+        if sand_type == 0:
+            sand_mgl = 0.0
+
+        # Mississippi River sand rating curve - original curve is in sediment load (tonnes/day)
+        if sand_type == 1:
+            sand_tpd = max(0,(77160000*(1 - np.e**(-0.0000002485*q_cms))-574800*(1-np.e**(-0.00004122*q_cms))))
+            sand_mgl = sand_tpd*tpd2mgl        
+        # Atchafalaya River sand rating curve - original curve is in sediment load (tonnes/day)
+        if sand_type == 2:
+            sand_mgl =   
+
+
+        #########################################
+        # Suspended Fine Sediment Rating Curves #
+        #########################################
+        # Assume no suspended fines
+        if fine_type == 0:
+            fine_mgl = 0.0
+
+        # Mississippi River fines rating curve - original curve is in sediment load (tonnes/day)
+        if fine_type == 1:
+            fine_tpd =(0.002*q_cms**1.86)
+            fine_mgl = fine_tpd*tpd2mgl 
+        # Atchafalaya River fines rating curve - original curve is in sediment load (tonnes/day)
+        if fine_type == 2:
+            fine_mgl =
+
+            
 
 # read in tributary list
 print('reading in tributary attributes from file')
@@ -65,9 +114,14 @@ div_vars = np.genfromtxt(TribListFile,usecols=6,skip_header=1,delimiter=',',dtyp
 div_impl_yrs = np.genfromtxt(TribListFile,usecols=7,skip_header=1,delimiter=',',dtype='int')
 
 tribs_types_arr = np.genfromtxt(TribListFile,usecols=2,skip_header=1,delimiter=',',dtype='int')
+sand_types_arr = np.genfromtxt(TribListFile,usecols=4,skip_header=1,delimiter=',',dtype='int')
+fine_types_arr = np.genfromtxt(TribListFile,usecols=5,skip_header=1,delimiter=',',dtype='int')
+
 tribs_types = {}
 for n in range(0,len(tribs_col)):
     tribs_types[tribs_col[n]] = tribs_types_arr[n]
+    sand_types[tribs_col[n]] = sand_types_arr[n]
+    fine_types[tribs_col[n]] = fine_types_arr[n]
 
 nTributaries_null = 0              # number of riverine input timeseries that are no longer used in and set to zero values in in TribQ, TribF, TribS, and QMult
 nTributaries = 0                   # number of riverine input timeseries included in TribQ, TribF, TribS, and QMult
