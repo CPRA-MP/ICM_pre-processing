@@ -3,16 +3,16 @@
 
 # These may need to be zeroed out due to new upland runoff model in upland compartments - likely all but the Orleans and Jefferson Parish and Violet basins are now in the upland Q values included in Precip boundary conditions.
 
-Mobile1 = 0.33*Pascagoula
-Mobile2 = 0.38*Pascagoula
-Jourdan = Wolf
-VioletRunoff = 0.35*np.mean(Amite + Natalbany + Tickfaw + Tchefuncte + Pearl)
-NE_LPO_Bonfouca = 2.7*Tangipahoa
-NE_LPO_OrleansParish = 4.05*Tangipahoa
-NE_LPO_JeffParish = 4.05*Tangipahoa
-SW_LPO = 4.05*Tangipahoa
-S_Maurepas = 1.01*Tangipahoa
-NE_LPO_LaCombe = 2.7*Tangipahoa
+##Mobile1 = 0.33*Pascagoula
+##Mobile2 = 0.38*Pascagoula
+##Jourdan = Wolf
+##VioletRunoff = 0.35*np.mean(Amite + Natalbany + Tickfaw + Tchefuncte + Pearl)
+##NE_LPO_Bonfouca = 2.7*Tangipahoa
+##NE_LPO_OrleansParish = 4.05*Tangipahoa
+##NE_LPO_JeffParish = 4.05*Tangipahoa
+##SW_LPO = 4.05*Tangipahoa
+##S_Maurepas = 1.01*Tangipahoa
+##NE_LPO_LaCombe = 2.7*Tangipahoa
 
 
 # -*- coding: utf-8 -*-
@@ -43,17 +43,31 @@ NE_LPO_LaCombe = 2.7*Tangipahoa
 
 import pandas as pd
 import numpy as np
+from datetime import datetime as dt
 import matplotlib.pyplot as plt
+
 
 TribListFile = 'MP2029_TribQ_columns.csv'
 
 ObsQ_dir = '../observed_tributary_flows/Data_Filled'
+obsQ_in_file = 'MP29_S00_G000_2006_2024_obsQ.csv'
+TribQ_in_file = 'MP29_future_conditions_tributary_flows_2025_2079_ssp2-4.5.csv'
+TribQ_out_file = 'MP29_ssp2-4.5_2025_2079_TribQ.csv'
+
+obs_years = range(2006,2025)
 
 # read in tributary list
+print('reading in tributary attributes from file')
+tribs_col = np.genfromtxt(TribListFile,usecols=0,skip_header=1,delimiter=',',dtype='int')
 tribs = np.genfromtxt(TribListFile,usecols=1,skip_header=1,delimiter=',',dtype='str')
 tribs_files = np.genfromtxt(TribListFile,usecols=9,skip_header=1,delimiter=',',dtype='str')
-tribs_types = np.genfromtxt(TribListFile,usecols=2,skip_header=1,delimiter=',',dtype='int')
+div_vars = np.genfromtxt(TribListFile,usecols=6,skip_header=1,delimiter=',',dtype='str')
+div_impl_yrs = np.genfromtxt(TribListFile,usecols=7,skip_header=1,delimiter=',',dtype='int')
 
+tribs_types_arr = np.genfromtxt(TribListFile,usecols=2,skip_header=1,delimiter=',',dtype='int')
+tribs_types = {}
+for n in range(0,len(tribs_col)):
+    tribs_types[tribs_col[n]] = tribs_types_arr[n]
 
 nTributaries_null = 0              # number of riverine input timeseries that are no longer used in and set to zero values in in TribQ, TribF, TribS, and QMult
 nTributaries = 0                   # number of riverine input timeseries included in TribQ, TribF, TribS, and QMult
@@ -61,7 +75,7 @@ nMissRiv_Diversions = 0            # number of Mississippi River diversion times
 nBFD_Passes = 0                    # number of distributary passes timeseries in the BFD included in TribQ, TribF, TribS, and QMult
 nAtchRiv_Diversions = 0            # number of Atchafalaya River diversion timeseries included in TribQ, TribF, TribS, and QMult
 
-for tt in tribs_types:
+for tt in tribs_types.values():
     if tt == 0:
         nTributaries_null += 1
     if tt == 1:
@@ -74,54 +88,114 @@ for tt in tribs_types:
         nBFD_Passes += 1
     if tt == 5:
         nAtchRiv_Diversions += 1        
-
-
 nTribs = nTributaries_null + nTributaries + nMissRiv_Diversions + nBFD_Passes + nAtchRiv_Diversions # total number of timeseries read in as tributary boundary conditions in TribQ
 
+# set some empty dictionaries used to format observed data
+implementation = {}
+obsQ = {}
+obsQ_structured = {}
 
-for nf in range(0,len(tribs_files)):
-        file = tribs_files[nf]
-        type = tribs_types[nf]
-	f = '%s/%s' % (ObsQ_dir,file)
-	if file != 'na':
-            obsQ = np.genfromtxt(f,delimiter=',',skip_header=1,usecols=[0,1],dtype='str')
+print('reading in observed tributary flow from:')
+for nf in range(0,nTribs):
+    col = tribs_col[nf]
+    trib = tribs[nf]
+    file = tribs_files[nf]
+    divnm = div_vars[nf]
+    impyr = div_impl_yrs[nf]
+    typ = tribs_types[col]
+    
+    f = '%s/%s' % (ObsQ_dir,file)
+    if typ in [1]:
+        print('   - %s' % file)
+        obsQ[col] = np.genfromtxt(f,delimiter=',',skip_header=1,usecols=[0,1],dtype='str')
 
-TribQ_in_file  = 'MP29_future_conditions_tributary_flows_2025_2079_ssp2-4.5.csv'
-TribQ_out_file = 'MP29_ssp2-4.5_2025_2079_TribQ.csv'
+    # if tributary is a diversion then read in implementation year
+    if typ in [2,3]:
+        implementation[divnm] = impyr    
 
+# prepare dictionary key that is all daily dates
+print('restructuring observed data from multiple files')
+for row in obsQ[1]:
+    d = dt.strptime(row[0],'%Y-%m-%d')
+    if d.year in obs_years:
+        obsQ_structured[d] = {}
+
+# restructure observed tributary data for output file (only includes data for trib_type = 1)
+for tribcol in obsQ.keys():
+    for row in obsQ[tribcol]:
+        d = row[0]
+        q = row[1]
+        dk = dt.strptime(d,'%Y-%m-%d')
+        if dk.year in obs_years:
+            try:
+                obsQ_structured[dk][tribcol] = float(q)
+            except:
+                obsQ_structured[dk][tribcol] = 0.0
+
+for tribcol in tribs_col:
+    typ = tribs_types[tribcol]
+    if typ != 1:
+        for dk in obsQ_structured.keys():
+            obsQ_structured[dk][tribcol] = 0.0
+
+print('writing all daily flows into single file:  %s' % obsQ_in_file)
+with open(obsQ_in_file,mode='w') as obsQ_out:
+    # write header line to structured obsQ outfile
+    line = 'newline'
+    for tribcol in tribs_col:
+        if line == 'newline':
+            line = tribcol
+        else:
+            line = '%s,%s' % (line,tribcol)
+    obsQ_out.write('%s\n' % line)          
+
+    # write daily outputs to strucdtured obsQ outfile
+    for d in obsQ_structured.keys():
+        line = 'newline'
+        for tribcol in tribs_col:
+            if tribs_types[tribcol] == 1:
+                qout = obsQ_structured[d][tribcol]
+            else:
+                qout = 0.0
+
+            if line == 'newline':
+                line = '%0.4f' % qout
+            else:
+                line = '%s,%0.4f' % (line,qout)
+        obsQ_out.write('%s,! %04d-%02d-%02d\n' % (line,d.year,d.month,d.day))
 
 # Set implementation year (elapsed) for each diversion
 #          0 = implemented at the start of the model run (ICM year 0)
 #          9 = diversion is implemented in year 9 of ICM run - which is year 7 of FWOA (FWOA year = ICM year + 2 spinup yeard)
 #       9999 = diversion is not implemented at all 
 
-implementation = {}
-implementation['IAFT'] = 9999       # Increase Atchafalaya Flows to Terrebonne
-implementation['AtRD'] = 9999         # Atchafalaya River Diversion
-implementation['BLaF'] = 9999       # Bayou Lafourche Diversion (existing pump @ Bayou Lafourche - in FWOA) ASSUMED IN THE MODEL VIA THE OBSERVED FLOWRATES IN TribQ FOR BAYOU LAFOURCHE AT THIBODEAUX
-implementation['FDWB'] = 9999         # Freshwater Delivery to Western Barataria (pump capacity increase to BLaF diversion)
-implementation['UBaH'] = 9999       # Upper Barataria Hydrologic Restoration
-implementation['UFWD'] = 9999       # Union Freshwater Diversion
-implementation['WMPD'] = 9999       # West Maurepas Diversion
-implementation['MSRM'] = 0          # Mississippi River Reintroduction in Maurepas Swamp
-implementation['EdDI'] = 9999       # Edgard Diversion
-implementation['Bonn'] = 0          # Bonnet Carre
-implementation['MLBD'] = 9999       # Manchac Landbridge Diversion  # IMPLEMENTED VIA LINKS FOR ALTERNATIVE RUNS - DO NOT ACTIVATE IN THIS CODE
-implementation['LaBr'] = 9999       # LaBranche Hydrological Restoration (not the same as LaBranche Diversion)
-implementation['LaBD'] = 9999       # LaBranche Diversion           # IMPLEMENTED VIA LINKS FOR ALTERNATIVE RUNS - DO NOT ACTIVATE IN THIS CODE
-implementation['DavP'] = 0          # Davis Pond
-implementation['AmaD'] = 9999       # Ama Sediment Diversion
-implementation['IHNC'] = 0          # Inner Harbor Navigational Canal
-implementation['CWDI'] = 9999         # Central Wetlands Diversion
-implementation['Caer'] = 0          # Caernarvon
-implementation['UBrD'] = 9999       # Upper Breton Diversion
-implementation['MBrD'] = 9999       # Mid-Breton Sound Diversion
-implementation['Naom'] = 0          # Naomi
-implementation['MBaD'] = 9999       # Mid-Barataria Diversion
-implementation['WPLH'] = 0          # West Pointe a la Hache
-implementation['LPlq'] = 9999       # Lower Plaquemines River Sediment Plan (yr2038)
-implementation['LBaD'] = 9999       # Lower Barataria Diversion
-implementation['LBrD'] = 9999       # Lower Breton Diversion
+
+##implementation['IAFT'] = 9999       # Increase Atchafalaya Flows to Terrebonne
+##implementation['AtRD'] = 9999         # Atchafalaya River Diversion
+##implementation['BLaF'] = 9999       # Bayou Lafourche Diversion (existing pump @ Bayou Lafourche - in FWOA) ASSUMED IN THE MODEL VIA THE OBSERVED FLOWRATES IN TribQ FOR BAYOU LAFOURCHE AT THIBODEAUX
+##implementation['FDWB'] = 9999         # Freshwater Delivery to Western Barataria (pump capacity increase to BLaF diversion)
+##implementation['UBaH'] = 9999       # Upper Barataria Hydrologic Restoration
+##implementation['UFWD'] = 9999       # Union Freshwater Diversion
+##implementation['WMPD'] = 9999       # West Maurepas Diversion
+##implementation['MSRM'] = 0          # Mississippi River Reintroduction in Maurepas Swamp
+##implementation['EdDI'] = 9999       # Edgard Diversion
+##implementation['Bonn'] = 0          # Bonnet Carre
+##implementation['MLBD'] = 9999       # Manchac Landbridge Diversion  # IMPLEMENTED VIA LINKS FOR ALTERNATIVE RUNS - DO NOT ACTIVATE IN THIS CODE
+##implementation['LaBr'] = 9999       # LaBranche Hydrological Restoration (not the same as LaBranche Diversion)
+##implementation['LaBD'] = 9999       # LaBranche Diversion           # IMPLEMENTED VIA LINKS FOR ALTERNATIVE RUNS - DO NOT ACTIVATE IN THIS CODE
+##implementation['DavP'] = 0          # Davis Pond
+##implementation['AmaD'] = 9999       # Ama Sediment Diversion
+##implementation['IHNC'] = 0          # Inner Harbor Navigational Canal
+##implementation['CWDI'] = 9999         # Central Wetlands Diversion
+##implementation['Caer'] = 0          # Caernarvon
+##implementation['UBrD'] = 9999       # Upper Breton Diversion
+##implementation['MBrD'] = 9999       # Mid-Breton Sound Diversion
+##implementation['Naom'] = 0          # Naomi
+##implementation['MBaD'] = 9999       # Mid-Barataria Diversion
+##implementation['WPLH'] = 0          # West Pointe a la Hache
+##implementation['LPlq'] = 9999       # Lower Plaquemines River Sediment Plan (yr2038)
+##implementation['LBaD'] = 9999       # Lower Barataria Diversion
+##implementation['LBrD'] = 9999       # Lower Breton Diversion
 
 
 
