@@ -1,168 +1,45 @@
-
-# legacy rating curves (developed for MP2012) used for ungauged drainage basins in the Lake Pontchartrain region
-
-# These may need to be zeroed out due to new upland runoff model in upland compartments - likely all but the Orleans and Jefferson Parish and Violet basins are now in the upland Q values included in Precip boundary conditions.
-
-##Mobile1 = 0.33*Pascagoula
-##Mobile2 = 0.38*Pascagoula
-##Jourdan = Wolf
-##VioletRunoff = 0.35*np.mean(Amite + Natalbany + Tickfaw + Tchefuncte + Pearl)
-##NE_LPO_Bonfouca = 2.7*Tangipahoa
-##NE_LPO_OrleansParish = 4.05*Tangipahoa
-##NE_LPO_JeffParish = 4.05*Tangipahoa
-##SW_LPO = 4.05*Tangipahoa
-##S_Maurepas = 1.01*Tangipahoa
-##NE_LPO_LaCombe = 2.7*Tangipahoa
-
-
-# -*- coding: utf-8 -*-
-#"""
-#Created on Thu Jan 28 11:46:45 2021
+#Originally created on Jan 28 2021
+#    last modified on April 6 2026
 #@author: madelinel & ewhite12
-#"""
 
 # This script is designed to build daily flow timeseries of flow diversions off of the Mississippi River, including the distributary network in the Birdsfoot Delta.
 # input/output flowrates are saved in cubic meters per second (cms), but all operational rules are defined in cubic feet per second (cfs)
+#
+# This script was updated for MP29 to build all files (including suspended fines and sands files from processed USGS observational data and assumed future scenario wetness classes.
+#
+# The algorithm structure is as follows:
+#       1 - read input filenames and working directories - most of the information is going to be included in the input file: TribsListFile = 'MP2029_TribQ_columns.csv'
+#       2 - the first processing step will be to compile the individual observed flow records (for all Type 1 tributaries that have an observed record file) into a single file
+#       3 - this single tributary flow record will be used to calculate diversion flowrates based on operational rule curves
+#           - for diversions with operational rule curves, there also needs to be an implementation year in which the diversion is activated
+#           - if the diversion/crevasse is historic, the implementation year is 1900, otherwise the implementation year is the calendar year in which the diversion/crevasse becomes active
+#           - if the diversion/crevasse is not active in the current simulation, the implementation year should be set to 9999
+#       4 - once the daily flows for the observed years range (set in 'obs_years') are calculated for all tributaries and diversions, these flows are saved to file: 'TribQ_all_file'
+#       5 - the daily flows from the observation period are used to calculate suspended sediment concentrations (fines & sands) for the observation period - these are saved to files: 'TribF_all_file' & 'TribS_all_file'
+#       6 - the three files from the observed period are used to piece together the future scenarios timeseries using the wetness classes from future scenario data and the representative periods for each wetness class
 
-#import numpy as np
 
-#daily_input_file = r'MP2023_diversion_calculator.csv'
-#daily_input_flow_column = [10]       # column number input file that has the data to be used as the upstream timeseries (note that Python uses a 0 index...so a value of 10 here is actually the 11th column in the input data
-#daily_input_year_column = [0]
-
-# read in Mississippi River @ Tarbert Landing (input data is in cms)
-#MissTarb_cms = np.genfromtxt(daily_input_file,delimiter=',', dtype='float',skip_header=header_rows,usecols=daily_input_flow_column)
-#MissTarb_cfs = MissTarb_cms / 0.3048**3      
-
-# read in date timeseries
-#dates_all = np.genfromtxt(daily_input_file,delimiter=',', dtype='string',skip_header=header_rows,usecols=daily_input_year_column)
-#ndays = len(dates_all)
-#yr0 = 2019      # this is the first year that will be used to determine what calendar year diversions are activated
-
-### Using pandas ###
-
-import pandas as pd
 import numpy as np
 from datetime import datetime as dt
 import matplotlib.pyplot as plt
 
+obs_years = range(2006,2025)
+fut_years = range(2025,2080)
 scenario = 'ssp2-4.5'
 TribListFile = 'MP2029_TribQ_columns.csv'
 
 ObsQ_dir = '../observed_tributary_flows/Data_Filled'
-obsQ_in_file = 'MP29_S00_G000_2006_2024_obsQ.csv'
-TribQ_in_file = 'MP29_future_conditions_tributary_flows_2025_2079_%s.csv' % scenario
-TribQ_out_file = 'MP29_ssp2-4.5_2025_2079_TribQ.csv'
-TribF_out_file = 'MP29_ssp2-4.5_2025_2079_TribF.csv'
-TribS_out_file =  'MP29_ssp2-4.5_2025_2079_TribS.csv'
-
-obs_years = range(2006,2025)
-
-flows_cms = np.genfromtxt(TribQ_out_file,delimiter=',',dtype='flt',skip_header=1,usecols=[0:-1]) #read in flows, skip date column and header row
-dates = np.genfromtxt(TribQ_out_file,delimiter=',',dtype='str',skip_header=1,usecols=[-1]) 
-
-for nday in range(0,len(dates)):
-    row = flows_cms(nday)    
-    for ntrib in range(0,len(row)):
-        sand_mgl = 0.0          # initialize to 0 mg/L
-        fine_mgl = 0.0          # initialize to 0 mg/L
-        q_cms = row[ntrib]
-
-        # set local copies of tributary-specific variables that were read in from input file
-        tribcol = tribs_col[ntrib]
-        sand_type = sand_types[tribcol]                     # integer storing sand rating curve type id
-        fines_type = fine_types[tribcol]                    # integer storing fines rating curve type id
-        trib_area = TSS_trib_areas[tribcol]                 # float storing the tributary area upstream of gage used for TSS rating curves for Florida Parishes tributaries with limited TSS data (see MP23 Appendix B2, section 5.5)
-        q_maxsand = TSS_qmaxsands[tribcol]                  # float storing flowrate (cms) used to define the maximum flow where peak sand suspension occurs - used to partition TSS into sands and fines (see MP23 Appendix B2, section 5.5)
-        max_sand_portion = TSS_max_sand_portions[tribcol]   # float storing maximum portion of TSS that can is sand (derived from Miss. River data) - used to partition TSS into sands and fines (see MP23 Appendix B2, section 5.5)
-            
-        tpd2mgl = 1000*1000*1000/((max(0.01,q_cms)*1000*86400)         # flow-specific conversion factor for tonnes/day to mg/L    (load to concentration) - max function is to prevent div/zero errors
-        kgps2mgl = 1000*1000/(max(0.01,q_cms)*1000)         # flow-specific conversion factor for kg/sec to mg/L        (load to concentration) - max function is to prevent div/zero errors
+obsQ_in_file = 'MP29_S00_G000_%04d_%04d_obsQ.csv' % (obs_years[0],obs_years[-1])
+TribQ_all_file = 'MP29_S00_G000_%04d_%04d_TribQ.csv' % (obs_years[0],obs_years[-1])
+TribF_all_file = 'MP29_S00_G000_%04d_%04d_TribF.csv' % (obs_years[0],obs_years[-1])
+TribS_all_file = 'MP29_S00_G000_%04d_%04d_TribS.csv' % (obs_years[0],obs_years[-1])
 
 
-        ###################################################################
-        # Rating curves for gages without any suspended sediment boundary #
-        ###################################################################
-        # gage is either not used as an ICM boundary conditon or is only used as a freshwater boundary - no sediment timeseries applied at this boundary in the ICM
-
-        # Assume no suspended sand
-        if sand_type == 0:
-            sand_mgl = 0.0
-
-        # Assume no suspended fines
-        if fine_type == 0:
-            fine_mgl = 0.0
-
-        ###########################################################################
-        # Rating curves for gages with Suspended Sand Sediment concentration data #
-        ###########################################################################
-        # Assume no suspended sand - gage is either not used as an ICM boundary conditon or is only used as a freshwater boundary - no sediment timeseries applied at this boundary in the ICM
-        if sand_type == 0:
-            sand_mgl = 0.0
-
-        # Mississippi River sand rating curve - original curve is in sediment load (tonnes/day)
-        if sand_type == 1:
-            sand_tpd = 77160000*(1.0 - np.e**(-0.0000002485*q_cms)) - 574800*(1.0 - np.e**(-0.00004122*q_cms))
-            sand_mgl = sand_tpd*tpd2mgl        
-
-        # Atchafalaya River sand rating curve - original curve is in sediment load (tonnes/day)
-        if sand_type == 2:
-            sand_mgl = 0.0001113*(q_cms**1.4897)
-
-        ###########################################################################
-        # Rating curves for gages with Suspended Fine Sediment concentration data #
-        ###########################################################################
-
-        # Mississippi River fines rating curve - original curve is in sediment load (tonnes/day)
-        if fine_type == 1:
-            fine_tpd =0.002*(q_cms**1.86)
-            fine_mgl = fine_tpd*tpd2mgl 
-
-        # Atchafalaya River fines rating curve - original curve is in sediment load (tonnes/day)
-        if fine_type == 2:
-            fine_mgl = 4948.5*(q_cms**-0.356)
+TribQ_out_file = 'MP29_%s_%04d_%04d_TribQ.csv' % (scenario,fut_years[0],fut_years[-1])
+TribF_out_file = 'MP29_%s_%04d_%04d_TribF.csv' % (scenario,fut_years[0],fut_years[-1])
+TribS_out_file =  'MP29_%s_%04d_%04d_TribS.csv' % (scenario,fut_years[0],fut_years[-1])
 
 
-        #################################################################################
-        # Rating curves for gages with only Total Suspended Sediment Concentration data #
-        #################################################################################
-        # TSS rating curves for all tributaries that do not have enough data for separate rating curves for sands and fines
-        #   after calculating TSS in mg/L - the TSS will be partitioned into portions sands and fines as a function of discharge - see MP23 Appendix B2, section 5.5 for documentation
-        if sand_type in [3,4,5,6,7]:
-           # Tributaries west of Mississippi River (excluding Atchafalaya) - total suspended sediment load rating curve from all USGS paired Q-TSS data west of Miss. River - partitioned into sand/fines
-            if sand_type == 3:
-                tss_kg_sec = 0.0382*(q_cms**1.099)
-                tss_mgl = sand_kg_sec*kgps2mgl
-
-            # Florida Parishes TSS rating curve based upon upstream drainage area (from Rachel Roblin MS thesis 2008, UNO)
-            if sand_type == 4:
-                tss_mgl = 95.8189*((q_cms/trib_area)**0.2678)
-        
-            # Tangipahoa River TSS rating curve (from USGS paired TSS-Q data)
-            if sand_type == 5:
-                tss_mgl = 3.231*(q_cms**0.7867)
-
-            # Bouge Chitto TSS rating curve (from USGS paired TSS-Q data)
-            if sand_type == 6:
-                tss_mgl = 6.3791*(q_cms**0.4833)
-
-            # Pearl River TSS rating curve (from USGS paired TSS-Q data) 
-            if sand_type == 7:
-                tss_mgl = 3.0127*(q_cms**0.5987)		
-
-            # partition TSS concentration into portion that is sand (based on MP23 analysis of sand/fines ratio in the Mississippi River - see MP23 Appendix B2, section 5.5)
-            q_qmx = q_cms/q_maxsand
-            sand_portion = max_sand_portion*(30.292*q_qmx**5 - 113.25*q_qmx**4 + 169.9*q_qmx**3 - 129.38*q_qmx**2 + 51.167*q_qmx- 7.7249)
-            sand_portion_capped = min(max(0,sand_portion),max_sand_portion)    # apply high-pass filter to avoid negative portion sands and apply low-pass filter to cap portion sand at default value (max_sand_portion) read in from input file
-
-            sand_mgl = tss_mgl*sand_portion_capped
-            fine_mgl = tss_mgl - sand_mgl
-
-        # high-pass filter to prevent negative concentrations    
-        sand_mgl = max(0,sand_mgl)
-        fine_mgl = max(0,fine_mgl)
-
-        
 # read in tributary list
 print('reading in tributary attributes from file')
 tribs_col = np.genfromtxt(TribListFile,usecols=0,skip_header=1,delimiter=',',dtype='int')
@@ -176,9 +53,9 @@ tribs_types_arr = np.genfromtxt(TribListFile,usecols=2,skip_header=1,delimiter='
 sand_types_arr = np.genfromtxt(TribListFile,usecols=4,skip_header=1,delimiter=',',dtype='int')
 fine_types_arr = np.genfromtxt(TribListFile,usecols=5,skip_header=1,delimiter=',',dtype='int')
 
-TSS_qmaxsands_arr = np.genfromtxt(TribListFile,usecols=10,skip_header=1,delimiter=',',dtype='flt')
-TSS_max_sand_portions_arr = np.genfromtxt(TribListFile,usecols=11,skip_header=1,delimiter=',',dtype='flt')
-TSS_trib_areas_arr = np.genfromtxt(TribListFile,usecols=12,skip_header=1,delimiter=',',dtype='flt')
+TSS_qmaxsands_arr = np.genfromtxt(TribListFile,usecols=10,skip_header=1,delimiter=',',dtype='float')
+TSS_max_sand_portions_arr = np.genfromtxt(TribListFile,usecols=11,skip_header=1,delimiter=',',dtype='float')
+TSS_trib_areas_arr = np.genfromtxt(TribListFile,usecols=12,skip_header=1,delimiter=',',dtype='float')
 
 
 # convert arrays read in from file into dictionaries with tribcol as key
@@ -286,47 +163,14 @@ with open(obsQ_in_file,mode='w') as obsQ_out:
                 line = '%s,%0.4f' % (line,qout)
         obsQ_out.write('%s,! %04d-%02d-%02d\n' % (line,d.year,d.month,d.day))
 
-# Set implementation year (elapsed) for each diversion
-#          0 = implemented at the start of the model run (ICM year 0)
-#          9 = diversion is implemented in year 9 of ICM run - which is year 7 of FWOA (FWOA year = ICM year + 2 spinup yeard)
-#       9999 = diversion is not implemented at all 
 
-
-##implementation['IAFT'] = 9999       # Increase Atchafalaya Flows to Terrebonne
-##implementation['AtRD'] = 9999         # Atchafalaya River Diversion
-##implementation['BLaF'] = 9999       # Bayou Lafourche Diversion (existing pump @ Bayou Lafourche - in FWOA) ASSUMED IN THE MODEL VIA THE OBSERVED FLOWRATES IN TribQ FOR BAYOU LAFOURCHE AT THIBODEAUX
-##implementation['FDWB'] = 9999         # Freshwater Delivery to Western Barataria (pump capacity increase to BLaF diversion)
-##implementation['UBaH'] = 9999       # Upper Barataria Hydrologic Restoration
-##implementation['UFWD'] = 9999       # Union Freshwater Diversion
-##implementation['WMPD'] = 9999       # West Maurepas Diversion
-##implementation['MSRM'] = 0          # Mississippi River Reintroduction in Maurepas Swamp
-##implementation['EdDI'] = 9999       # Edgard Diversion
-##implementation['Bonn'] = 0          # Bonnet Carre
-##implementation['MLBD'] = 9999       # Manchac Landbridge Diversion  # IMPLEMENTED VIA LINKS FOR ALTERNATIVE RUNS - DO NOT ACTIVATE IN THIS CODE
-##implementation['LaBr'] = 9999       # LaBranche Hydrological Restoration (not the same as LaBranche Diversion)
-##implementation['LaBD'] = 9999       # LaBranche Diversion           # IMPLEMENTED VIA LINKS FOR ALTERNATIVE RUNS - DO NOT ACTIVATE IN THIS CODE
-##implementation['DavP'] = 0          # Davis Pond
-##implementation['AmaD'] = 9999       # Ama Sediment Diversion
-##implementation['IHNC'] = 0          # Inner Harbor Navigational Canal
-##implementation['CWDI'] = 9999         # Central Wetlands Diversion
-##implementation['Caer'] = 0          # Caernarvon
-##implementation['UBrD'] = 9999       # Upper Breton Diversion
-##implementation['MBrD'] = 9999       # Mid-Breton Sound Diversion
-##implementation['Naom'] = 0          # Naomi
-##implementation['MBaD'] = 9999       # Mid-Barataria Diversion
-##implementation['WPLH'] = 0          # West Pointe a la Hache
-##implementation['LPlq'] = 9999       # Lower Plaquemines River Sediment Plan (yr2038)
-##implementation['LBaD'] = 9999       # Lower Barataria Diversion
-##implementation['LBrD'] = 9999       # Lower Breton Diversion
-
-
-
+print('calculating diversion flows based on operational rating curves')
 trib_cols   = range(0,nTributaries) # first 35 columns of TribQ.csv are tributary flows; diversions start in column 36
 TribQ_in_date_col    = [nTribs]     # last column of input TribQ.csv is the date
 MissRiv_col = 10                    # column 11 of TribQ.csv is the Miss. River @ Tarbert Landing data
 
-TribQ_in    = np.genfromtxt(TribQ_in_file,delimiter=',',dtype=str,skip_header=1,usecols=trib_cols)
-dates_all   = np.genfromtxt(TribQ_in_file,delimiter=',',dtype=str,skip_header=1,usecols=TribQ_in_date_col)
+TribQ_in    = np.genfromtxt(TribQ_all_file,delimiter=',',dtype=str,skip_header=1,usecols=trib_cols)
+dates_all   = np.genfromtxt(TribQ_all_file,delimiter=',',dtype=str,skip_header=1,usecols=TribQ_in_date_col)
 
 dates_all = [d.split()[1] for d in dates_all]
 
@@ -336,8 +180,7 @@ MissTarb_cfs = [ q/(0.3048**3.0) for q in MissTarb_cms ]
 
 # read in date timeseries
 ndays = len(dates_all)
-yr0 = 2019
- 
+
 # build zero arrays for each diversion timeseries
 Atch_cfs = np.zeros(ndays)      # Atchafalaya River
 Atch_cms = np.zeros(ndays)      
@@ -482,7 +325,7 @@ for d in range(0,ndays):
     # which corresponds to a flow threshold of 250,000 cfs at Morgan City (417,000 cfs at Simmesport)
 
     impl_yr = implementation['IAFT']
-    if yr < yr0 + impl_yr:
+    if yr <= impl_yr:
         Qdiv = 0
     else:   
         if Q_Atch_MorganCity >= 250000:
@@ -504,7 +347,7 @@ for d in range(0,ndays):
     #    30,000 cfs capacity (modeled at 26% of the Atchafalaya River flow upstream of the confluence with Bayou Shaffer)
     
     impl_yr = implementation['AtRD']
-    if yr < yr0 + impl_yr:
+    if yr <= impl_yr:
         Qdiv = 0
     else:   
         if Qresidual_Atch <= 0:
@@ -530,7 +373,7 @@ for d in range(0,ndays):
     impl_yr3 = implementation['UBaH']
     
     # Bayou Lafourche Diversion (existing pump station - in FWOA)
-    if yr < yr0 + impl_yr:
+    if yr <= impl_yr:
         Qdiv = 0
     else:   
         if Qresidual >= 1500:
@@ -541,7 +384,7 @@ for d in range(0,ndays):
     # Freshwater Delivery to Western Barataria
     # MP2023: project 322
     # add additional 500 cfs capacity to Bayou Lafourche pump
-    if yr < yr0 + impl_yr2:
+    if yr <= impl_yr2:
         Qdiv += 0
     else:   
         if Qresidual >= 500:
@@ -554,7 +397,7 @@ for d in range(0,ndays):
     #  Construction of a 750 cfs pump/siphon structure along Bayou Lafourche to supply freshwater into the marshes, bayous, and lakes of the Upper Barataria Sub-Basin
     # pump 750 cfs into Bayou Lafourche to be routed down BLaF and eventually eastward into Upper Barataria
     # add this diversion flow to the pre-existing Bayou Lafourche flow calculated above
-    if yr < yr0 + impl_yr3:
+    if yr <= impl_yr3:
         Qdiv += 0
     else:   
         if Qresidual >= 750:
@@ -581,7 +424,7 @@ for d in range(0,ndays):
     
     impl_yr = implementation['UFWD']
     
-    if yr < yr0 + impl_yr:
+    if yr <= impl_yr:
         Qdiv = 0
     else:
         if Qresidual < 200000 or Qresidual >= 600000:
@@ -609,7 +452,7 @@ for d in range(0,ndays):
 
     impl_yr = implementation['WMPD']
     
-    if yr < yr0 + impl_yr:
+    if yr <= impl_yr:
         Qdiv = 0
     else:
         if Qresidual < 200000:
@@ -631,7 +474,7 @@ for d in range(0,ndays):
 # not used #
 # not used #    impl_yr = implementation['WMPD']
 # not used #    
-# not used #    if yr < yr0 + impl_yr:
+# not used #    if yr <= impl_yr:
 # not used #        Qdiv = 0
 # not used #    else:
 # not used #        if Qresidual >= 3000:
@@ -652,7 +495,7 @@ for d in range(0,ndays):
         
     impl_yr = implementation['MSRM']
     
-    if yr < yr0 + impl_yr:
+    if yr <= impl_yr:
         Qdiv = 0
     else:
         if month == 4:
@@ -679,7 +522,7 @@ for d in range(0,ndays):
     
     impl_yr = implementation['EdDI']
     
-    if yr < yr0 + impl_yr:
+    if yr <= impl_yr:
         Qdiv = 0
     else:
         if Qresidual == 600000:
@@ -704,7 +547,7 @@ for d in range(0,ndays):
          
     impl_yr = implementation['Bonn']
     
-    if yr < yr0 + impl_yr:
+    if yr <= impl_yr:
         Qdiv = 0
     else:
         if Qresidual >= 1250000:
@@ -730,7 +573,7 @@ for d in range(0,ndays):
         
     impl_yr = implementation['MLBD']
     
-    if yr < yr0 + impl_yr:
+    if yr <= impl_yr:
         Qdiv = 0
     else:
         if Bonn_cfs[d] >= 2000:
@@ -755,7 +598,7 @@ for d in range(0,ndays):
         
     impl_yr = implementation['LaBD']
     
-    if yr < yr0 + impl_yr:
+    if yr <= impl_yr:
         Qdiv = 0
     else:
         if Bonn_cfs[d] < 10000:
@@ -775,7 +618,7 @@ for d in range(0,ndays):
           
     impl_yr = implementation['DavP']
     
-    if yr < yr0 + impl_yr:
+    if yr <= impl_yr:
         Qdiv = 0
     else:
         Qdiv = min(max(0,1269.1454*np.log(Qresidual*0.3048**3) - 9932.94805), 10594.3487)
@@ -795,7 +638,7 @@ for d in range(0,ndays):
         
     impl_yr = implementation['LaBr']
     
-    if yr < yr0 + impl_yr:
+    if yr <= impl_yr:
         Qdiv = 0
     else:
         if Qresidual >= 750:
@@ -820,7 +663,7 @@ for d in range(0,ndays):
         
     impl_yr = implementation['AmaD']
     
-    if yr < yr0 + impl_yr:
+    if yr <= impl_yr:
         Qdiv = 0
     else:
         if Qresidual < 200000:
@@ -841,7 +684,7 @@ for d in range(0,ndays):
         
     impl_yr = implementation['IHNC']
     
-    if yr < yr0 + impl_yr:
+    if yr <= impl_yr:
         Qdiv = 0
     else:
         if Qresidual >= 0:
@@ -864,7 +707,7 @@ for d in range(0,ndays):
         
     impl_yr = implementation['CWDI']
     
-    if yr < yr0 + impl_yr:
+    if yr <= impl_yr:
         Qdiv = 0
     else:
         if Qresidual >= 5000:
@@ -885,7 +728,7 @@ for d in range(0,ndays):
         
     impl_yr = implementation['Caer']
     
-    if yr < yr0 + impl_yr:
+    if yr <= impl_yr:
         Qdiv = 0
     else:
         Qdiv = min(max(0,701.9143*np.log(Qresidual*0.3048**3)-5299.908567),8828.66655)
@@ -908,7 +751,7 @@ for d in range(0,ndays):
         
     impl_yr = implementation['UBrD']
 
-    if yr < yr0 + impl_yr:
+    if yr <= impl_yr:
         Qdiv = 0
     else:
         if Qresidual < 200000:
@@ -932,7 +775,7 @@ for d in range(0,ndays):
         
     impl_yr = implementation['MBrD']
     
-    if yr < yr0 + impl_yr:
+    if yr <= impl_yr:
         Qdiv = 0
     else:
         #Qdiv = max(5000,0.04762*Qresidual-4524)     # 55,000 cfs Operations - opening threshold @ 250k
@@ -961,7 +804,7 @@ for d in range(0,ndays):
 
     impl_yr = implementation['Naom']
     
-    if yr < yr0 + impl_yr:
+    if yr <= impl_yr:
         Qdiv = 0
     else:
         Qdiv = min(max(0,281.044708*np.log(Qresidual*0.3048**3)-2500.93169),2118.87997)
@@ -983,7 +826,7 @@ for d in range(0,ndays):
         # 75k @ 1.25 m , 5k min : Diversion flow of rating curve 0.08757*residual - 34375 with a minimum of 5,000 cfs, opens at 450,000 cfs
     impl_yr = implementation['MBaD']
 
-    if yr <yr0 + impl_yr:
+    if yr <= impl_yr:
         Qdiv = 0
     else:
 #        if Qresidual < 200000:
@@ -1017,7 +860,7 @@ for d in range(0,ndays):
         
     impl_yr = implementation['WPLH']
     
-    if yr < yr0 + impl_yr:
+    if yr <= impl_yr:
         Qdiv = 0
     else:
         Qdiv = min(max(0, 456.35377*np.log(Qresidual*0.3048**3)-4049.4586),2118.87997)
@@ -1048,11 +891,11 @@ for d in range(0,ndays):
     impl_yr = implementation['LPlq']
     
     if impl_yr < 9999: 
-        if yr < yr0 + impl_yr:
+        if yr <= impl_yr:
             Qdiv = 0
         else:
             # add WPLH calculated flow back into residual flow since this diversion will replace that WPLH timeseries
-            if yr >= yr0 + implementation['WPLH'] :
+            if yr >= implementation['WPLH'] :
                 Qresidual += WPLH_cfs[d]  
         
             if month > 4 and month < 12:
@@ -1074,7 +917,7 @@ for d in range(0,ndays):
         
     impl_yr = implementation['LBaD']
     
-    if yr < yr0 + impl_yr:
+    if yr <= impl_yr:
         Qdiv = 0
     else:
         if Qresidual < 200000:
@@ -1099,7 +942,7 @@ for d in range(0,ndays):
         
     impl_yr = implementation['LBrD']
     
-    if yr < yr0 + impl_yr:
+    if yr <= impl_yr:
         Qdiv = 0
     else:
         if Qresidual < 200000:
@@ -1363,7 +1206,145 @@ with open(TribQ_out_file,mode='w') as TribQ_out:
         line = '%s,%s' % (line,SWPR_cms[d])             # ncol 68 # South West Pass calculated from residual flow to close mass balance on Miss Riv flow in/out
         line = '%s,%s' % (line,IAFT_cms[d])             # ncol 69 # Increase Atchafalaya Flows to Terrebonne
         line = '%s,%s' % (line,AtRD_cms[d])             # ncol 70 # Atchafalaya River Diversion
-        #line = '%s,%s' % (line,LaBD_cms[d])                       # LaBranche Diversion
+        #line = '%s,%s' % (line,LaBD_cms[d])                       # LaBra  nche Diversion
         line = '%s,! %s' % (line, dates_all[d])         # ncol 71 # Date
         
         TribQ_out.write('%s\n' % line)
+
+
+
+#####################################################################
+###   calculate suspended sediment concentrations from flow       ###
+###   rating curves and write new TribF.csv and TribS.csv files   ###
+#####################################################################
+print('reading in formatted TribQ.csv to calculate suspsended sands and fines concentrations.')
+flows_cms = np.genfromtxt(TribQ_out_file,delimiter=',',dtype='flt',skip_header=1,usecols=range(0,nTribs))
+dates = np.genfromtxt(TribQ_out_file,delimiter=',',dtype='str',skip_header=1,usecols=[-1]) 
+
+with open(TribF_out_file,mode='w') as fineout:
+    with open(TribS_out_file,mode='w') as sandout:
+            # write header line to TribQ.csv
+        line = '1'
+        for n in range(2,nTribs+1):
+            line = '%s,%s' % (line,n)
+            fineout.write('%s\n' % line)
+            sandout.write('%s\n' % line)
+            
+        for nday in range(0,len(dates)):
+            dateout = dates[nday]       # dateout will have the '!  ' prepended to the date string from being read in from TribQ.csv
+            row = flows_cms(nday)
+            
+            fineline = ''
+            sandline = ''
+
+            for ntrib in range(0,len(row)):
+                sand_mgl = 0.0          # initialize to 0 mg/L
+                fine_mgl = 0.0          # initialize to 0 mg/L
+                q_cms = row[ntrib]
+        
+                # set local copies of tributary-specific variables that were read in from input file
+                tribcol = tribs_col[ntrib]
+                sand_type = sand_types[tribcol]                     # integer storing sand rating curve type id
+                fines_type = fine_types[tribcol]                    # integer storing fines rating curve type id
+                trib_area = TSS_trib_areas[tribcol]                 # float storing the tributary area upstream of gage used for TSS rating curves for Florida Parishes tributaries with limited TSS data (see MP23 Appendix B2, section 5.5)
+                q_maxsand = TSS_qmaxsands[tribcol]                  # float storing flowrate (cms) used to define the maximum flow where peak sand suspension occurs - used to partition TSS into sands and fines (see MP23 Appendix B2, section 5.5)
+                max_sand_portion = TSS_max_sand_portions[tribcol]   # float storing maximum portion of TSS that can is sand (derived from Miss. River data) - used to partition TSS into sands and fines (see MP23 Appendix B2, section 5.5)
+                    
+                tpd2mgl = 1000*1000*1000/(max(0.01,q_cms)*1000*86400)         # flow-specific conversion factor for tonnes/day to mg/L    (load to concentration) - max function is to prevent div/zero errors
+                kgps2mgl = 1000*1000/(max(0.01,q_cms)*1000)         # flow-specific conversion factor for kg/sec to mg/L        (load to concentration) - max function is to prevent div/zero errors
+        
+        
+                ###################################################################
+                # Rating curves for gages without any suspended sediment boundary #
+                ###################################################################
+                # gage is either not used as an ICM boundary conditon or is only used as a freshwater boundary - no sediment timeseries applied at this boundary in the ICM
+        
+                # Assume no suspended sand
+                if sand_type == 0:
+                    sand_mgl = 0.0
+        
+                # Assume no suspended fines
+                if fine_type == 0:
+                    fine_mgl = 0.0
+        
+                ###########################################################################
+                # Rating curves for gages with Suspended Sand Sediment concentration data #
+                ###########################################################################
+                # Assume no suspended sand - gage is either not used as an ICM boundary conditon or is only used as a freshwater boundary - no sediment timeseries applied at this boundary in the ICM
+                if sand_type == 0:
+                    sand_mgl = 0.0
+        
+                # Mississippi River sand rating curve - original curve is in sediment load (tonnes/day)
+                if sand_type == 1:
+                    sand_tpd = 77160000*(1.0 - np.e**(-0.0000002485*q_cms)) - 574800*(1.0 - np.e**(-0.00004122*q_cms))
+                    sand_mgl = sand_tpd*tpd2mgl        
+        
+                # Atchafalaya River sand rating curve - original curve is in sediment load (tonnes/day)
+                if sand_type == 2:
+                    sand_mgl = 0.0001113*(q_cms**1.4897)
+        
+                ###########################################################################
+                # Rating curves for gages with Suspended Fine Sediment concentration data #
+                ###########################################################################
+        
+                # Mississippi River fines rating curve - original curve is in sediment load (tonnes/day)
+                if fine_type == 1:
+                    fine_tpd =0.002*(q_cms**1.86)
+                    fine_mgl = fine_tpd*tpd2mgl 
+        
+                # Atchafalaya River fines rating curve - original curve is in sediment load (tonnes/day)
+                if fine_type == 2:
+                    fine_mgl = 4948.5*(q_cms**-0.356)
+        
+        
+                #################################################################################
+                # Rating curves for gages with only Total Suspended Sediment Concentration data #
+                #################################################################################
+                # TSS rating curves for all tributaries that do not have enough data for separate rating curves for sands and fines
+                #   after calculating TSS in mg/L - the TSS will be partitioned into portions sands and fines as a function of discharge - see MP23 Appendix B2, section 5.5 for documentation
+                if sand_type in [3,4,5,6,7]:
+                # Tributaries west of Mississippi River (excluding Atchafalaya) - total suspended sediment load rating curve from all USGS paired Q-TSS data west of Miss. River - partitioned into sand/fines
+                    if sand_type == 3:
+                        tss_kg_sec = 0.0382*(q_cms**1.099)
+                        tss_mgl = sand_kg_sec*kgps2mgl
+        
+                    # Florida Parishes TSS rating curve based upon upstream drainage area (from Rachel Roblin MS thesis 2008, UNO)
+                    if sand_type == 4:
+                        tss_mgl = 95.8189*((q_cms/trib_area)**0.2678)
+                
+                    # Tangipahoa River TSS rating curve (from USGS paired TSS-Q data)
+                    if sand_type == 5:
+                        tss_mgl = 3.231*(q_cms**0.7867)
+        
+                    # Bouge Chitto TSS rating curve (from USGS paired TSS-Q data)
+                    if sand_type == 6:
+                        tss_mgl = 6.3791*(q_cms**0.4833)
+        
+                    # Pearl River TSS rating curve (from USGS paired TSS-Q data) 
+                    if sand_type == 7:
+                        tss_mgl = 3.0127*(q_cms**0.5987)		
+        
+                    # partition TSS concentration into portion that is sand (based on MP23 analysis of sand/fines ratio in the Mississippi River - see MP23 Appendix B2, section 5.5)
+                    q_qmx = q_cms/q_maxsand
+                    sand_portion = max_sand_portion*(30.292*q_qmx**5 - 113.25*q_qmx**4 + 169.9*q_qmx**3 - 129.38*q_qmx**2 + 51.167*q_qmx- 7.7249)
+                    sand_portion_capped = min(max(0,sand_portion),max_sand_portion)    # apply high-pass filter to avoid negative portion sands and apply low-pass filter to cap portion sand at default value (max_sand_portion) read in from input file
+        
+                    sand_mgl = tss_mgl*sand_portion_capped
+                    fine_mgl = tss_mgl - sand_mgl
+        
+                # high-pass filter to prevent negative concentrations    
+                sand_mgl = max(0,sand_mgl)
+                fine_mgl = max(0,fine_mgl)
+                
+                # append concentrations to daily line that will be written to file
+                if ntrib == 0:
+                    fineline = '%0.4f' % (fine_mgl)
+                    sandline = '%0.4f' % (sand_mgl)
+                else:
+                    fineline = '%s,%0.4f' % (fineline,fine_mgl)
+                    sandline = '%s,%0.4f' % (sandline,sand_mgl)
+                
+                
+                
+            fineout.write('%s,%s\n' % (fineline,dateout))
+            sandout.write('%s,%s\n' % (sandline,dateout))
