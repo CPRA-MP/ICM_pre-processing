@@ -1,75 +1,75 @@
-MP29 FWOAv25 TribQ Column,ributary/Diversion Name,Type flag,Type,Sand_Rating_Curve,Fines_Rating_Curve,Diversion_variable,Implementation_year,ICMv24 compartments in Qmult,Observed data file,Discharge resulting in maximum sand transport Qmaxsand (cms),Maximum portion sand
-1,Neches River at Beaumont TX,1,Tributary-observed,0,0,na,0,1017,Neches_River_at_Beaumont_TX_08041780_filled.csv,0,0
-2,Sabine River at Ruliff TX,1,Tributary-observed,3,3,na,0,1281,Sabine_River_at_Ruliff_TX_08030500_filled.csv,1091.112992,0.1
-3,Vinton Canal,0,No longer used - replaced with precip/UplandQ,0,0,na,9999,0,na,0,0
-4,Calcasieu River near Kinder LA,1,Tributary-observed,3,3,na,0,1456,Calcasieu_River_near_Kinder_LA_08015500_filled.csv,1129.64689,0.1
-5,Bayou Lacassine near Lake Arthur LA,0,No longer used - replaced with precip/UplandQ,0,0,na,9999,0,Bayou_Lacassine_near_Lake_Arthur_LA_08012470_filled.csv,0,0
-6,Mermentau River at Mermentau LA,1,Tributary-observed,3,3,na,0,1637,Mermentau_River_at_Mermentau_LA_08012150_filled.csv,1055.362973,0.1
-7,Vermilion River at Surrey St at Lafayette LA,1,Tributary-observed,3,3,na,0,1559,Vermilion_River_at_Surrey_St_at_Lafayette_LA_07386880_filled.csv,117.3910272,0.1
-8,Charenton Drainage Canal at Baldwin LA,1,Tributary-observed,3,3,na,0,429,Charenton_Drainage_Canal_at_Baldwin_LA_07385790_filled.csv,554.5382458,0.1
-9,GIWW at Franklin,0,No longer used - replaced with precip/UplandQ,0,0,na,9999,0,GIWW_at_Bayou_Sale_Ridge_near_Franklin_LA_07381670_filled.csv,0,0
-10,Atchafalaya River,3,Diversion-calculated,2,2,Atch,0,896,Atchafalaya_River_at_Simmesport_LA_07381490_filled.csv,0,0
-11,Mississippi River Upstream (Tarbert Landing),1,Tributary-observed,1,1,na,0,370; 369,Mississippi_River_at_Tarbert_Landing_01100_filled.csv,0,0
-12,GIWW at Larose,0,No longer used - replaced with precip/UplandQ,0,0,na,9999,0,GIWW_West_of_Bayou_Lafourche_at_Larose_LA_07381235_filled.csv,0,0
-13,Bayou Lafourche at Thibodeaux LA,1,Tributary-observed,3,3,na,0,911,Bayou_Lafourche_at_Thibodeaux_LA_07381000_filled.csv,31.20457501,0.1
-14,Amite River near Denham Springs LA,1,Tributary-observed,4,4,na,0,1603,Amite_River_near_Denham_Springs_LA_07378500_filled.csv,1804.255075,0.3
-15,Natalbany River at Baptist LA,1,Tributary-observed,4,4,na,0,1608,Natalbany_River_at_Baptist_LA_07376500_filled.csv,222.0365237,0.3
-16,Tickfaw River at Holden LA,1,Tributary-observed,4,4,na,0,1629,Tickfaw_River_at_Holden_LA_07376000_filled.csv,433.8376872,0.3
-17,Tangipahoa River at Robert LA,1,Tributary-observed,4,4,na,0,1610,Tangipahoa_River_at_Robert_LA_07375500_filled.csv,2175.382746,0.3
-18,Tchefuncte River near Folsom LA,1,Tributary-observed,4,4,na,0,1484,Tchefuncte_River_near_Folsom_LA_07375000_filled.csv,601.4203249,0.3
-19,Bogue Chitto near Bush LA,1,Tributary-observed,4,4,na,0,1529,Bogue_Chitto_near_Bush_LA_02492000_filled.csv,2226.235083,0.3
-20,Pearl River near Bogalusa LA,1,Tributary-observed,4,4,na,0,1526,Pearl_River_near_Bogalusa_LA_02489500_filled.csv,3557.303853,0.3
-21,Wolf River near Landon MS,1,Tributary-observed,4,0,na,0,69,Wolf_River_near_Landon_MS_02481510_filled.csv,-,-
-22,Biloxi River at Wortham MS,1,Tributary-observed,4,0,na,0,300,Biloxi_River_at_Wortham_MS_02481000_filled.csv,-,-
-23,Pascagoula River at Merrill MS,1,Tributary-observed,4,0,na,0,300,Pascagoula_River_at_Merrill_MS_02479000_filled.csv,-,-
-24,Tensaw River near Mount Vernon AL,1,Tributary-observed,4,0,na,0,301,Tensaw_River_near_Mount_Vernon_AL_02471019_filled.csv,-,-
-25,Mobile River at River Mile 31 at Bucks AL,1,Tributary-observed,4,0,na,0,301,Mobile_River_at_River_Mile_31_at_Bucks_AL_02470629_filled.csv,-,-
-26,Mobile1,2,Tributary-calculated,0,0,na,0,301,na,-,-
-27,Mobile 2,2,Tributary-calculated,0,0,na,0,301,na,-,-
-28,Jourdan,2,Tributary-calculated,0,0,na,0,69,na,-,-
-29,Violet Runoff,2,Tributary-calculated,0,0,na,0,367,na,-,-
-30,NE Lake Pontchartrain ungaged drainage (Bayou Bonfouca),0,No longer used - replaced with precip/UplandQ,0,0,na,9999,0,na,-,-
-31,SE Lake Pontchartrain ungaged drainage (Orleans Parish),0,No longer used - replaced with precip/UplandQ,0,0,na,9999,0,na,-,-
-32,SW Lake Pontchartrain ungaged drainage (Jefferson Parish),0,No longer used - replaced with precip/UplandQ,0,0,na,9999,0,na,-,-
-33,SW Lake Pontchartrain ungaged drainage,0,No longer used - replaced with precip/UplandQ,0,0,na,9999,0,na,-,-
-34,S Lake Maurepas ungaged drainage,0,No longer used - replaced with precip/UplandQ,0,0,na,9999,0,na,-,-
-35,NE Lake Pontchartrain ungaged drainage (Bayou LaCombe),0,No longer used - replaced with precip/UplandQ,0,0,na,9999,0,na,-,-
-36,Morganza Spillway,3,Diversion-calculated,2,2,Morg,0,393,na,-,-
-37,Bayou LaFourche Diversion (includes flows for Upper Barataria Hydrologic Restoration project),3,Diversion-calculated,3,3,BLaF,9999,911,na,31.20457501,0.1
-37,Freshwater Delivery to Western Barataria,3,Diversion-calculated,3,3,FDWB,9999,911,na,31.20457501,0.1
-37,Upper Barataria Hydrologic Restoration,3,Diversion-calculated,3,3,UBaH,9999,911,na,31.20457501,0.1
-38,Union Freshwater Diversion,3,Diversion-calculated,1,1,UFWD,9999,15,na,-,-
-39,West Maurepas Diversion,3,Diversion-calculated,1,1,WMPD,9999,15,na,-,-
-40,Mississippi River Reintroduction in Maurepas Swamp (East Maurepas Diversion in 2017 MP),3,Diversion-calculated,1,1,MSRM,0,1834; 1833; 19; 16; 5,na,-,-
-41,Edgard Diversion,3,Diversion-calculated,1,1,EdDI,9999,1688,na,-,-
-42,Bonnet Carre,3,Diversion-calculated,1,1,Bonn,0,11,na,-,-
-43,Manchac Landbridge Diversion,3,Diversion-calculated,0,0,MLBD,9999,1842,na,-,-
-44,LaBranche Hydrologic Restoration,3,Diversion-calculated,0,0,LaBr,9999,12,na,-,-
-45,Davis Pond,3,Diversion-calculated,0,1,DavP,0,151,Davis_Pond_295501090190400_filled.csv,-,-
-46,Ama Sediment Diversion,3,Diversion-calculated,1,1,AmaD,9999,151,na,-,-
-47,Inner Harbor Navigational Canal,3,Diversion-calculated,1,1,IHNC,0,1684,na,-,-
-48,Central Wetlands Diversion,3,Diversion-calculated,1,1,CWDI,9999,81,na,-,-
-49,Caernarvon,3,Diversion-calculated,0,1,Caer,0,95,Caernarvon_295124089542100_filled.csv,-,-
-50,Upper Breton Diversion,3,Diversion-calculated,1,1,UBrD,9999,1756,na,-,-
-51,Mid-Breton Sound Diversion,3,Diversion-calculated,1,1,MBrD,9999,92,na,-,-
-52,Mid-Barataria Diversion,3,Diversion-calculated,1,1,MBaD,9999,1737,na,-,-
-53,Naomi,3,Diversion-calculated,0,1,Naom,0,224,na,-,-
-54,West Point a la Hache,3,Diversion-calculated,0,1,WPLH,0,235,na,-,-
-54,Lower Plaquemines River Sediment Plan,3,Diversion-calculated,1,1,LPlq,9999,235,na,-,-
-55,Lower Barataria Diversion,3,Diversion-calculated,1,1,LBaD,9999,256,na,-,-
-56,Lower Breton Diversion,3,Diversion-calculated,1,1,LBrD,9999,140,na,-,-
-57,Mardi Gras Pass,4,Pass-calculated,1,1,MGPS,0,1789,na,-,-
-58,Bohemia,4,Pass-calculated,1,1,Bohe,0,131; 130; 129,na,-,-
-59,Ostrica,4,Pass-calculated,1,1,Ostr,0,134; 133; 132,na,-,-
-59,Neptune Pass,4,Pass-calculated,1,1,Ostr,0,134; 133; 132,na,-,-
-60,Ft St Phillip,4,Pass-calculated,1,1,FStP,0,136; 135; 134,na,-,-
-61,Baptiste Collette,4,Pass-calculated,1,1,Bapt,0,374,na,-,-
-62,Grand Pass,4,Pass-calculated,1,1,GrPa,0,381; 380,na,-,-
-63,West Bay Diversion,4,Pass-calculated,1,1,WBay,0,292,na,-,-
-64,SmallCuts,4,Pass-calculated,1,1,SCut,0,288; 266,na,-,-
-65,Cubits Gap,4,Pass-calculated,1,1,CGap,0,376; 272; 271,na,-,-
-66,Pass A Loutre,4,Pass-calculated,1,1,PLou,0,377,na,-,-
-67,South Pass,4,Pass-calculated,1,1,SPas,0,378,na,-,-
-68,South West Pass,4,Pass-calculated,1,1,SWPR,0,379,na,-,-
-69,Increase Atchafalaya Flows to Terrebonne,5,Diversion-calculated from Atchafalaya River flow,2,2,IAFT,9999,890,na,-,-
-70,Atchafalaya River Diversion,5,Diversion-calculated from Atchafalaya River flow,2,2,AtRD,9999,593,na,-,-
+MP29 FWOAv25 TribQ Column,ributary/Diversion Name,Type flag,Type,Sand_Rating_Curve,Fines_Rating_Curve,Diversion_variable,Implementation_year,ICMv24 compartments in Qmult,Observed data file,Discharge resulting in maximum sand transport Qmaxsand (cms),Maximum portion sand,Tributary area (sq km) used for TSS (from Roblin 2008) 
+1,Neches River at Beaumont TX,1,Tributary-observed,0,0,na,0,1017,Neches_River_at_Beaumont_TX_08041780_filled.csv,0,0,0
+2,Sabine River at Ruliff TX,1,Tributary-observed,3,3,na,0,1281,Sabine_River_at_Ruliff_TX_08030500_filled.csv,1091.112992,0.1,0
+3,Vinton Canal,0,No longer used - replaced with precip/UplandQ,0,0,na,9999,0,na,0,0,0
+4,Calcasieu River near Kinder LA,1,Tributary-observed,3,3,na,0,1456,Calcasieu_River_near_Kinder_LA_08015500_filled.csv,1129.64689,0.1,0
+5,Bayou Lacassine near Lake Arthur LA,0,No longer used - replaced with precip/UplandQ,0,0,na,9999,0,Bayou_Lacassine_near_Lake_Arthur_LA_08012470_filled.csv,0,0,0
+6,Mermentau River at Mermentau LA,1,Tributary-observed,3,3,na,0,1637,Mermentau_River_at_Mermentau_LA_08012150_filled.csv,1055.362973,0.1,0
+7,Vermilion River at Surrey St at Lafayette LA,1,Tributary-observed,3,3,na,0,1559,Vermilion_River_at_Surrey_St_at_Lafayette_LA_07386880_filled.csv,117.3910272,0.1,0
+8,Charenton Drainage Canal at Baldwin LA,1,Tributary-observed,3,3,na,0,429,Charenton_Drainage_Canal_at_Baldwin_LA_07385790_filled.csv,554.5382458,0.1,0
+9,GIWW at Franklin,0,No longer used - replaced with precip/UplandQ,0,0,na,9999,0,GIWW_at_Bayou_Sale_Ridge_near_Franklin_LA_07381670_filled.csv,0,0,0
+10,Atchafalaya River,3,Diversion-calculated,2,2,Atch,0,896,Atchafalaya_River_at_Simmesport_LA_07381490_filled.csv,0,0,0
+11,Mississippi River Upstream (Tarbert Landing),1,Tributary-observed,1,1,na,0,370; 369,Mississippi_River_at_Tarbert_Landing_01100_filled.csv,0,0,0
+12,GIWW at Larose,0,No longer used - replaced with precip/UplandQ,0,0,na,9999,0,GIWW_West_of_Bayou_Lafourche_at_Larose_LA_07381235_filled.csv,0,0,0
+13,Bayou Lafourche at Thibodeaux LA,1,Tributary-observed,3,3,na,0,911,Bayou_Lafourche_at_Thibodeaux_LA_07381000_filled.csv,31.20457501,0.1,0
+14,Amite River near Denham Springs LA,1,Tributary-observed,4,4,na,0,1603,Amite_River_near_Denham_Springs_LA_07378500_filled.csv,1804.255075,0.3,3315
+15,Natalbany River at Baptist LA,1,Tributary-observed,4,4,na,0,1608,Natalbany_River_at_Baptist_LA_07376500_filled.csv,222.0365237,0.3,206
+16,Tickfaw River at Holden LA,1,Tributary-observed,4,4,na,0,1629,Tickfaw_River_at_Holden_LA_07376000_filled.csv,433.8376872,0.3,640
+17,Tangipahoa River at Robert LA,1,Tributary-observed,5,5,na,0,1610,Tangipahoa_River_at_Robert_LA_07375500_filled.csv,2175.382746,0,0
+18,Tchefuncte River near Folsom LA,1,Tributary-observed,4,4,na,0,1484,Tchefuncte_River_near_Folsom_LA_07375000_filled.csv,601.4203249,0.3,247
+19,Bogue Chitto near Bush LA,1,Tributary-observed,6,6,na,0,1529,Bogue_Chitto_near_Bush_LA_02492000_filled.csv,2226.235083,0,0
+20,Pearl River near Bogalusa LA,1,Tributary-observed,7,7,na,0,1526,Pearl_River_near_Bogalusa_LA_02489500_filled.csv,3557.303853,0,0
+21,Wolf River near Landon MS,1,Tributary-observed,0,0,na,0,69,Wolf_River_near_Landon_MS_02481510_filled.csv,0,0,0
+22,Biloxi River at Wortham MS,1,Tributary-observed,0,0,na,0,300,Biloxi_River_at_Wortham_MS_02481000_filled.csv,0,0,0
+23,Pascagoula River at Merrill MS,1,Tributary-observed,0,0,na,0,300,Pascagoula_River_at_Merrill_MS_02479000_filled.csv,0,0,0
+24,Tensaw River near Mount Vernon AL,1,Tributary-observed,0,0,na,0,301,Tensaw_River_near_Mount_Vernon_AL_02471019_filled.csv,0,0,0
+25,Mobile River at River Mile 31 at Bucks AL,1,Tributary-observed,0,0,na,0,301,Mobile_River_at_River_Mile_31_at_Bucks_AL_02470629_filled.csv,0,0,0
+26,Mobile1,2,Tributary-calculated,0,0,na,0,301,na,0,0,0
+27,Mobile 2,2,Tributary-calculated,0,0,na,0,301,na,0,0,0
+28,Jourdan,2,Tributary-calculated,0,0,na,0,69,na,0,0,0
+29,Violet Runoff,2,Tributary-calculated,0,0,na,0,367,na,0,0,0
+30,NE Lake Pontchartrain ungaged drainage (Bayou Bonfouca),0,No longer used - replaced with precip/UplandQ,0,0,na,9999,0,na,0,0,0
+31,SE Lake Pontchartrain ungaged drainage (Orleans Parish),0,No longer used - replaced with precip/UplandQ,0,0,na,9999,0,na,0,0,0
+32,SW Lake Pontchartrain ungaged drainage (Jefferson Parish),0,No longer used - replaced with precip/UplandQ,0,0,na,9999,0,na,0,0,0
+33,SW Lake Pontchartrain ungaged drainage,0,No longer used - replaced with precip/UplandQ,0,0,na,9999,0,na,0,0,0
+34,S Lake Maurepas ungaged drainage,0,No longer used - replaced with precip/UplandQ,0,0,na,9999,0,na,0,0,0
+35,NE Lake Pontchartrain ungaged drainage (Bayou LaCombe),0,No longer used - replaced with precip/UplandQ,0,0,na,9999,0,na,0,0,0
+36,Morganza Spillway,3,Diversion-calculated,2,2,Morg,0,393,na,0,0,0
+37,Bayou LaFourche Diversion (includes flows for Upper Barataria Hydrologic Restoration project),3,Diversion-calculated,3,3,BLaF,9999,911,na,31.20457501,0.1,0
+37,Freshwater Delivery to Western Barataria,3,Diversion-calculated,3,3,FDWB,9999,911,na,31.20457501,0.1,0
+37,Upper Barataria Hydrologic Restoration,3,Diversion-calculated,3,3,UBaH,9999,911,na,31.20457501,0.1,0
+38,Union Freshwater Diversion,3,Diversion-calculated,1,1,UFWD,9999,15,na,0,0,0
+39,West Maurepas Diversion,3,Diversion-calculated,1,1,WMPD,9999,15,na,0,0,0
+40,Mississippi River Reintroduction in Maurepas Swamp (East Maurepas Diversion in 2017 MP),3,Diversion-calculated,1,1,MSRM,0,1834; 1833; 19; 16; 5,na,0,0,0
+41,Edgard Diversion,3,Diversion-calculated,1,1,EdDI,9999,1688,na,0,0,0
+42,Bonnet Carre,3,Diversion-calculated,1,1,Bonn,0,11,na,0,0,0
+43,Manchac Landbridge Diversion,3,Diversion-calculated,0,0,MLBD,9999,1842,na,0,0,0
+44,LaBranche Hydrologic Restoration,3,Diversion-calculated,0,0,LaBr,9999,12,na,0,0,0
+45,Davis Pond,3,Diversion-calculated,0,1,DavP,0,151,Davis_Pond_295501090190400_filled.csv,0,0,0
+46,Ama Sediment Diversion,3,Diversion-calculated,1,1,AmaD,9999,151,na,0,0,0
+47,Inner Harbor Navigational Canal,3,Diversion-calculated,1,1,IHNC,0,1684,na,0,0,0
+48,Central Wetlands Diversion,3,Diversion-calculated,1,1,CWDI,9999,81,na,0,0,0
+49,Caernarvon,3,Diversion-calculated,0,1,Caer,0,95,Caernarvon_295124089542100_filled.csv,0,0,0
+50,Upper Breton Diversion,3,Diversion-calculated,1,1,UBrD,9999,1756,na,0,0,0
+51,Mid-Breton Sound Diversion,3,Diversion-calculated,1,1,MBrD,9999,92,na,0,0,0
+52,Mid-Barataria Diversion,3,Diversion-calculated,1,1,MBaD,9999,1737,na,0,0,0
+53,Naomi,3,Diversion-calculated,0,1,Naom,0,224,na,0,0,0
+54,West Point a la Hache,3,Diversion-calculated,0,1,WPLH,0,235,na,0,0,0
+54,Lower Plaquemines River Sediment Plan,3,Diversion-calculated,1,1,LPlq,9999,235,na,0,0,0
+55,Lower Barataria Diversion,3,Diversion-calculated,1,1,LBaD,9999,256,na,0,0,0
+56,Lower Breton Diversion,3,Diversion-calculated,1,1,LBrD,9999,140,na,0,0,0
+57,Mardi Gras Pass,4,Pass-calculated,1,1,MGPS,0,1789,na,0,0,0
+58,Bohemia,4,Pass-calculated,1,1,Bohe,0,131; 130; 129,na,0,0,0
+59,Ostrica,4,Pass-calculated,1,1,Ostr,0,134; 133; 132,na,0,0,0
+59,Neptune Pass,4,Pass-calculated,1,1,Ostr,0,134; 133; 132,na,0,0,0
+60,Ft St Phillip,4,Pass-calculated,1,1,FStP,0,136; 135; 134,na,0,0,0
+61,Baptiste Collette,4,Pass-calculated,1,1,Bapt,0,374,na,0,0,0
+62,Grand Pass,4,Pass-calculated,1,1,GrPa,0,381; 380,na,0,0,0
+63,West Bay Diversion,4,Pass-calculated,1,1,WBay,0,292,na,0,0,0
+64,SmallCuts,4,Pass-calculated,1,1,SCut,0,288; 266,na,0,0,0
+65,Cubits Gap,4,Pass-calculated,1,1,CGap,0,376; 272; 271,na,0,0,0
+66,Pass A Loutre,4,Pass-calculated,1,1,PLou,0,377,na,0,0,0
+67,South Pass,4,Pass-calculated,1,1,SPas,0,378,na,0,0,0
+68,South West Pass,4,Pass-calculated,1,1,SWPR,0,379,na,0,0,0
+69,Increase Atchafalaya Flows to Terrebonne,5,Diversion-calculated from Atchafalaya River flow,2,2,IAFT,9999,890,na,0,0,0
+70,Atchafalaya River Diversion,5,Diversion-calculated from Atchafalaya River flow,2,2,AtRD,9999,593,na,0,0,0
