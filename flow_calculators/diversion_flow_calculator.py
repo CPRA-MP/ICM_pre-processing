@@ -64,47 +64,105 @@ dates = np.genfromtxt(TribQ_out_file,delimiter=',',dtype='str',skip_header=1,use
 for nday in range(0,len(dates)):
     row = flows_cms(nday)    
     for ntrib in range(0,len(row)):
+        sand_mgl = 0.0          # initialize to 0 mg/L
+        fine_mgl = 0.0          # initialize to 0 mg/L
         q_cms = row[ntrib]
-        
+
+        # set local copies of tributary-specific variables that were read in from input file
         tribcol = tribs_col[ntrib]
-        sand_type = sand_types[tribcol]
-        fines_type = fine_types[tribcol]
+        sand_type = sand_types[tribcol]                     # integer storing sand rating curve type id
+        fines_type = fine_types[tribcol]                    # integer storing fines rating curve type id
+        trib_area = TSS_trib_areas[tribcol]                 # float storing the tributary area upstream of gage used for TSS rating curves for Florida Parishes tributaries with limited TSS data (see MP23 Appendix B2, section 5.5)
+        q_maxsand = TSS_qmaxsands[tribcol]                  # float storing flowrate (cms) used to define the maximum flow where peak sand suspension occurs - used to partition TSS into sands and fines (see MP23 Appendix B2, section 5.5)
+        max_sand_portion = TSS_max_sand_portions[tribcol]   # float storing maximum portion of TSS that can is sand (derived from Miss. River data) - used to partition TSS into sands and fines (see MP23 Appendix B2, section 5.5)
+            
+        tpd2mgl = 1000*1000*1000/((max(0.01,q_cms)*1000*86400)         # flow-specific conversion factor for tonnes/day to mg/L    (load to concentration) - max function is to prevent div/zero errors
+        kgps2mgl = 1000*1000/(max(0.01,q_cms)*1000)         # flow-specific conversion factor for kg/sec to mg/L        (load to concentration) - max function is to prevent div/zero errors
 
-        tpd2mgl = 1000*1000*1000/(q_cms*1000*86400)  # daily conversion factor for tonnes/day to mg/L
 
-        #########################################
-        # Suspended Sand Sediment Rating Curves #
-        #########################################
+        ###################################################################
+        # Rating curves for gages without any suspended sediment boundary #
+        ###################################################################
+        # gage is either not used as an ICM boundary conditon or is only used as a freshwater boundary - no sediment timeseries applied at this boundary in the ICM
+
         # Assume no suspended sand
+        if sand_type == 0:
+            sand_mgl = 0.0
+
+        # Assume no suspended fines
+        if fine_type == 0:
+            fine_mgl = 0.0
+
+        ###########################################################################
+        # Rating curves for gages with Suspended Sand Sediment concentration data #
+        ###########################################################################
+        # Assume no suspended sand - gage is either not used as an ICM boundary conditon or is only used as a freshwater boundary - no sediment timeseries applied at this boundary in the ICM
         if sand_type == 0:
             sand_mgl = 0.0
 
         # Mississippi River sand rating curve - original curve is in sediment load (tonnes/day)
         if sand_type == 1:
-            sand_tpd = max(0,(77160000*(1 - np.e**(-0.0000002485*q_cms))-574800*(1-np.e**(-0.00004122*q_cms))))
+            sand_tpd = 77160000*(1.0 - np.e**(-0.0000002485*q_cms)) - 574800*(1.0 - np.e**(-0.00004122*q_cms))
             sand_mgl = sand_tpd*tpd2mgl        
+
         # Atchafalaya River sand rating curve - original curve is in sediment load (tonnes/day)
         if sand_type == 2:
-            sand_mgl =   
+            sand_mgl = 0.0001113*(q_cms**1.4897)
 
-
-        #########################################
-        # Suspended Fine Sediment Rating Curves #
-        #########################################
-        # Assume no suspended fines
-        if fine_type == 0:
-            fine_mgl = 0.0
+        ###########################################################################
+        # Rating curves for gages with Suspended Fine Sediment concentration data #
+        ###########################################################################
 
         # Mississippi River fines rating curve - original curve is in sediment load (tonnes/day)
         if fine_type == 1:
-            fine_tpd =(0.002*q_cms**1.86)
+            fine_tpd =0.002*(q_cms**1.86)
             fine_mgl = fine_tpd*tpd2mgl 
+
         # Atchafalaya River fines rating curve - original curve is in sediment load (tonnes/day)
         if fine_type == 2:
-            fine_mgl =
+            fine_mgl = 4948.5*(q_cms**-0.356)
 
-            
 
+        #################################################################################
+        # Rating curves for gages with only Total Suspended Sediment Concentration data #
+        #################################################################################
+        # TSS rating curves for all tributaries that do not have enough data for separate rating curves for sands and fines
+        #   after calculating TSS in mg/L - the TSS will be partitioned into portions sands and fines as a function of discharge - see MP23 Appendix B2, section 5.5 for documentation
+        if sand_type in [3,4,5,6,7]:
+           # Tributaries west of Mississippi River (excluding Atchafalaya) - total suspended sediment load rating curve from all USGS paired Q-TSS data west of Miss. River - partitioned into sand/fines
+            if sand_type == 3:
+                tss_kg_sec = 0.0382*(q_cms**1.099)
+                tss_mgl = sand_kg_sec*kgps2mgl
+
+            # Florida Parishes TSS rating curve based upon upstream drainage area (from Rachel Roblin MS thesis 2008, UNO)
+            if sand_type == 4:
+                tss_mgl = 95.8189*((q_cms/trib_area)**0.2678)
+        
+            # Tangipahoa River TSS rating curve (from USGS paired TSS-Q data)
+            if sand_type == 5:
+                tss_mgl = 3.231*(q_cms**0.7867)
+
+            # Bouge Chitto TSS rating curve (from USGS paired TSS-Q data)
+            if sand_type == 6:
+                tss_mgl = 6.3791*(q_cms**0.4833)
+
+            # Pearl River TSS rating curve (from USGS paired TSS-Q data) 
+            if sand_type == 7:
+                tss_mgl = 3.0127*(q_cms**0.5987)		
+
+            # partition TSS concentration into portion that is sand (based on MP23 analysis of sand/fines ratio in the Mississippi River - see MP23 Appendix B2, section 5.5)
+            q_qmx = q_cms/q_maxsand
+            sand_portion = max_sand_portion*(30.292*q_qmx**5 - 113.25*q_qmx**4 + 169.9*q_qmx**3 - 129.38*q_qmx**2 + 51.167*q_qmx- 7.7249)
+            sand_portion_capped = min(max(0,sand_portion),max_sand_portion)    # apply high-pass filter to avoid negative portion sands and apply low-pass filter to cap portion sand at default value (max_sand_portion) read in from input file
+
+            sand_mgl = tss_mgl*sand_portion_capped
+            fine_mgl = tss_mgl - sand_mgl
+
+        # high-pass filter to prevent negative concentrations    
+        sand_mgl = max(0,sand_mgl)
+        fine_mgl = max(0,fine_mgl)
+
+        
 # read in tributary list
 print('reading in tributary attributes from file')
 tribs_col = np.genfromtxt(TribListFile,usecols=0,skip_header=1,delimiter=',',dtype='int')
@@ -113,15 +171,25 @@ tribs_files = np.genfromtxt(TribListFile,usecols=9,skip_header=1,delimiter=',',d
 div_vars = np.genfromtxt(TribListFile,usecols=6,skip_header=1,delimiter=',',dtype='str')
 div_impl_yrs = np.genfromtxt(TribListFile,usecols=7,skip_header=1,delimiter=',',dtype='int')
 
+# read in data from input file into arrays that will be converted to dictionaries with tribcol as key
 tribs_types_arr = np.genfromtxt(TribListFile,usecols=2,skip_header=1,delimiter=',',dtype='int')
 sand_types_arr = np.genfromtxt(TribListFile,usecols=4,skip_header=1,delimiter=',',dtype='int')
 fine_types_arr = np.genfromtxt(TribListFile,usecols=5,skip_header=1,delimiter=',',dtype='int')
 
+TSS_qmaxsands_arr = np.genfromtxt(TribListFile,usecols=10,skip_header=1,delimiter=',',dtype='flt')
+TSS_max_sand_portions_arr = np.genfromtxt(TribListFile,usecols=11,skip_header=1,delimiter=',',dtype='flt')
+TSS_trib_areas_arr = np.genfromtxt(TribListFile,usecols=12,skip_header=1,delimiter=',',dtype='flt')
+
+
+# convert arrays read in from file into dictionaries with tribcol as key
 tribs_types = {}
 for n in range(0,len(tribs_col)):
-    tribs_types[tribs_col[n]] = tribs_types_arr[n]
-    sand_types[tribs_col[n]] = sand_types_arr[n]
-    fine_types[tribs_col[n]] = fine_types_arr[n]
+    tribs_types[tribs_col[n]] = tribs_types_arr[n]                      # integer storing tributary type id
+    sand_types[tribs_col[n]] = sand_types_arr[n]                        # integer storing sand rating curve type id
+    fine_types[tribs_col[n]] = fine_types_arr[n]                        # integer storing fines rating curve type id
+    TSS_trib_areas[tribs_col[n]] = TSS_trib_areas_arr[n]                # float storing the tributary area upstream of gage used for TSS rating curves for Florida Parishes tributaries with limited TSS data (see MP23 Appendix B2, section 5.5)
+    TSS_qmaxsands[tribs_col[n]] = TSS_qmaxsands_arr[n]                  # float storing flowrate (cms) used to define the maximum flow where peak sand suspension occurs - used to partition TSS into sands and fines (see MP23 Appendix B2, section 5.5)
+    TSS_max_sand_portions[tribs_col[n]] = TSS_max_sand_portions_arr[n]  # float storing maximum portion of TSS that can is sand (derived from Miss. River data) - used to partition TSS into sands and fines (see MP23 Appendix B2, section 5.5)
 
 nTributaries_null = 0              # number of riverine input timeseries that are no longer used in and set to zero values in in TribQ, TribF, TribS, and QMult
 nTributaries = 0                   # number of riverine input timeseries included in TribQ, TribF, TribS, and QMult
