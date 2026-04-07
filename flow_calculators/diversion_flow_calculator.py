@@ -60,6 +60,12 @@ TSS_trib_areas_arr = np.genfromtxt(TribListFile,usecols=12,skip_header=1,delimit
 
 # convert arrays read in from file into dictionaries with tribcol as key
 tribs_types = {}
+sand_types = {}
+fine_types = {}
+TSS_trib_areas = {}
+TSS_qmaxsands = {}
+TSS_max_sand_portions = {}
+
 for n in range(0,len(tribs_col)):
     tribs_types[tribs_col[n]] = tribs_types_arr[n]                      # integer storing tributary type id
     sand_types[tribs_col[n]] = sand_types_arr[n]                        # integer storing sand rating curve type id
