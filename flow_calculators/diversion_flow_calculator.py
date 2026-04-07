@@ -14,8 +14,8 @@
 #           - for diversions with operational rule curves, there also needs to be an implementation year in which the diversion is activated
 #           - if the diversion/crevasse is historic, the implementation year is 1900, otherwise the implementation year is the calendar year in which the diversion/crevasse becomes active
 #           - if the diversion/crevasse is not active in the current simulation, the implementation year should be set to 9999
-#       4 - once the daily flows for the observed years range (set in 'obs_years') are calculated for all tributaries and diversions, these flows are saved to file: 'TribQ_all_file'
-#       5 - the daily flows from the observation period are used to calculate suspended sediment concentrations (fines & sands) for the observation period - these are saved to files: 'TribF_all_file' & 'TribS_all_file'
+#       4 - once the daily flows for the observed years range (set in 'obs_years') are calculated for all tributaries and diversions, these flows are saved to file: 'TribQ_observed_out_file'
+#       5 - the daily flows from the observation period are used to calculate suspended sediment concentrations (fines & sands) for the observation period - these are saved to files: 'TribF_observed_out_file' & 'TribS_observed_out_file'
 #       6 - the three files from the observed period are used to piece together the future scenarios timeseries using the wetness classes from future scenario data and the representative periods for each wetness class
 
 
@@ -28,16 +28,19 @@ fut_years = range(2025,2080)
 scenario = 'ssp2-4.5'
 TribListFile = 'MP2029_TribQ_columns.csv'
 
+process_observed = False
+process_sediment = False
+
 ObsQ_dir = '../observed_tributary_flows/Data_Filled'
 ObsQ_all_file = 'MP29_S00_G000_%04d_%04d_obsQ.csv' % (obs_years[0],obs_years[-1])
-TribQ_all_file = 'MP29_S00_G000_%04d_%04d_TribQ.csv' % (obs_years[0],obs_years[-1])
-TribF_all_file = 'MP29_S00_G000_%04d_%04d_TribF.csv' % (obs_years[0],obs_years[-1])
-TribS_all_file = 'MP29_S00_G000_%04d_%04d_TribS.csv' % (obs_years[0],obs_years[-1])
+TribQ_observed_out_file = 'MP29_S00_G000_%04d_%04d_TribQ.csv' % (obs_years[0],obs_years[-1])
+TribF_observed_out_file = 'MP29_S00_G000_%04d_%04d_TribF.csv' % (obs_years[0],obs_years[-1])
+TribS_observed_out_file = 'MP29_S00_G000_%04d_%04d_TribS.csv' % (obs_years[0],obs_years[-1])
 
-
-TribQ_out_file = 'MP29_%s_%04d_%04d_TribQ.csv' % (scenario,fut_years[0],fut_years[-1])
-TribF_out_file = 'MP29_%s_%04d_%04d_TribF.csv' % (scenario,fut_years[0],fut_years[-1])
-TribS_out_file =  'MP29_%s_%04d_%04d_TribS.csv' % (scenario,fut_years[0],fut_years[-1])
+TribQ_future_all_file = 'MP29_%s_future_conditions_tribQ_%04d_%04d_no_diversions_GFDL_ESM2G_MissAtch.csv'  % (scenario,fut_years[0],fut_years[-1])
+TribQ_future_out_file = 'MP29_%s_%04d_%04d_TribQ.csv' % (scenario,fut_years[0],fut_years[-1])
+TribF_future_out_file = 'MP29_%s_%04d_%04d_TribF.csv' % (scenario,fut_years[0],fut_years[-1])
+TribS_future_out_file =  'MP29_%s_%04d_%04d_TribS.csv' % (scenario,fut_years[0],fut_years[-1])
 
 
 # read in tributary list
@@ -101,92 +104,113 @@ implementation = {}
 obsQ = {}
 obsQ_structured = {}
 
-print('reading in observed tributary flow from:')
-for nf in range(0,nTribs):
-    col = tribs_col[nf]
-    trib = tribs[nf]
-    file = tribs_files[nf]
-    divnm = div_vars[nf]
-    impyr = div_impl_yrs[nf]
-    typ = tribs_types[col]
+if process_observed == False:
+    for nf in range(0,nTribs):
+        col = tribs_col[nf]
+        trib = tribs[nf]
+        file = tribs_files[nf]
+        divnm = div_vars[nf]
+        impyr = div_impl_yrs[nf]
+        typ = tribs_types[col]
+        implementation[divnm] = impyr 
+else:
+    print('reading in observed tributary flow from:')
+    for nf in range(0,nTribs):
+        col = tribs_col[nf]
+        trib = tribs[nf]
+        file = tribs_files[nf]
+        divnm = div_vars[nf]
+        impyr = div_impl_yrs[nf]
+        typ = tribs_types[col]
+        
+        f = '%s/%s' % (ObsQ_dir,file)
+        if typ in [1]:
+            print('   - %s' % file)
+            obsQ[col] = np.genfromtxt(f,delimiter=',',skip_header=1,usecols=[0,1],dtype='str')
+        #if typ in [2]:
+        
+        #  read in implementation year
     
-    f = '%s/%s' % (ObsQ_dir,file)
-    if typ in [1]:
-        print('   - %s' % file)
-        obsQ[col] = np.genfromtxt(f,delimiter=',',skip_header=1,usecols=[0,1],dtype='str')
-    #if typ in [2]:
-       
-    #  read in implementation year
- 
-    implementation[divnm] = impyr    
-
-# prepare dictionary key that is all daily dates
-print('restructuring observed data from multiple files')
-for row in obsQ[1]:
-    d = dt.strptime(row[0],'%Y-%m-%d')
-    if d.year in obs_years:
-        obsQ_structured[d] = {}
-
-# restructure observed tributary data for output file (only includes data for trib_type = 1)
-for tribcol in obsQ.keys():
-    for row in obsQ[tribcol]:
-        d = row[0]
-        q = row[1]
-        dk = dt.strptime(d,'%Y-%m-%d')
-        if dk.year in obs_years:
-            try:
-                obsQ_structured[dk][tribcol] = float(q)
-            except:
-                obsQ_structured[dk][tribcol] = 0.0
-
-for tribcol in tribs_col:
-    typ = tribs_types[tribcol]
-    if typ != 1:
-        for dk in obsQ_structured.keys():
-            if typ == 0:
-                obsQ_structured[dk][tribcol] = 22.2
-            elif typ == 2:
-                obsQ_structured[dk][tribcol] = 33.3
-            else:
-                obsQ_structured[dk][tribcol] = 0.0
-
-print('writing all daily flows into single file:  %s' % ObsQ_all_file)
-with open(ObsQ_all_file,mode='w') as obsQ_out:
-    # write header line to structured obsQ outfile
-    line = 'newline'
+        implementation[divnm] = impyr    
+    
+    # prepare dictionary key that is all daily dates
+    print('restructuring observed data from multiple files')
+    for row in obsQ[1]:
+        d = dt.strptime(row[0],'%Y-%m-%d')
+        if d.year in obs_years:
+            obsQ_structured[d] = {}
+    
+    # restructure observed tributary data for output file (only includes data for trib_type = 1)
+    for tribcol in obsQ.keys():
+        for row in obsQ[tribcol]:
+            d = row[0]
+            q = row[1]
+            dk = dt.strptime(d,'%Y-%m-%d')
+            if dk.year in obs_years:
+                try:
+                    obsQ_structured[dk][tribcol] = float(q)
+                except:
+                    obsQ_structured[dk][tribcol] = 0.0
+    
     for tribcol in tribs_col:
-        if line == 'newline':
-            line = tribcol
-        else:
-            line = '%s,%s' % (line,tribcol)
-    obsQ_out.write('%s\n' % line)          
-
-    # write daily outputs to strucdtured obsQ outfile
-    for d in obsQ_structured.keys():
+        typ = tribs_types[tribcol]
+        if typ != 1:
+            for dk in obsQ_structured.keys():
+                if typ == 0:
+                    obsQ_structured[dk][tribcol] = 22.2
+                elif typ == 2:
+                    obsQ_structured[dk][tribcol] = 33.3
+                else:
+                    obsQ_structured[dk][tribcol] = 0.0
+    
+    print('writing all daily flows into single file:  %s' % ObsQ_all_file)
+    with open(ObsQ_all_file,mode='w') as obsQ_out:
+        # write header line to structured obsQ outfile
         line = 'newline'
         for tribcol in tribs_col:
-##            if tribs_types[tribcol] == 1:
-##                qout = obsQ_structured[d][tribcol]
-##            else:
-##                qout = 0.0
-            qout = obsQ_structured[d][tribcol]
             if line == 'newline':
-                line = '%0.4f' % qout
+                line = tribcol
             else:
-                line = '%s,%0.4f' % (line,qout)
-        obsQ_out.write('%s,! %04d-%02d-%02d\n' % (line,d.year,d.month,d.day))
-
+                line = '%s,%s' % (line,tribcol)
+        obsQ_out.write('%s\n' % line)          
+    
+        # write daily outputs to strucdtured obsQ outfile
+        for d in obsQ_structured.keys():
+            line = 'newline'
+            for tribcol in tribs_col:
+    ##            if tribs_types[tribcol] == 1:
+    ##                qout = obsQ_structured[d][tribcol]
+    ##            else:
+    ##                qout = 0.0
+                qout = obsQ_structured[d][tribcol]
+                if line == 'newline':
+                    line = '%0.4f' % qout
+                else:
+                    line = '%s,%0.4f' % (line,qout)
+            obsQ_out.write('%s,! %04d-%02d-%02d\n' % (line,d.year,d.month,d.day))
+    
 
 print('calculating diversion flows based on operational rating curves')
 trib_cols   = range(0,nTributaries+nTributaries_null+nTributaries_calc)
 TribQ_in_date_col    = [-1]         # last column of input TribQ.csv is the date
 MissRiv_col = 10                    # column 11 of TribQ.csv is the Miss. River @ Tarbert Landing data
 
-TribQ_in    = np.genfromtxt(ObsQ_all_file,delimiter=',',dtype=str,skip_header=1,usecols=trib_cols)
-dates_all   = np.genfromtxt(ObsQ_all_file,delimiter=',',dtype=str,skip_header=1,usecols=TribQ_in_date_col)
+if process_observed == True:
+    TribQ_in    = np.genfromtxt(ObsQ_all_file,delimiter=',',dtype=str,skip_header=1,usecols=trib_cols)
+    dates_all   = np.genfromtxt(ObsQ_all_file,delimiter=',',dtype=str,skip_header=1,usecols=TribQ_in_date_col)
 
-dates_all = [da.split()[1] for da in dates_all]
+else:
+    TribQ_in    = np.genfromtxt(TribQ_future_all_file,delimiter=',',dtype=str,skip_header=1,usecols=trib_cols)
+    dates_all   = np.genfromtxt(TribQ_future_all_file,delimiter=',',dtype=str,skip_header=1,usecols=TribQ_in_date_col)
 
+date_comment = False
+try:
+    dates_all = [da.split()[1] for da in dates_all]                                                # this will work if date is formatted as '! YYYYMMDD' or '! YYYY-MM-DD'
+    date_comment = True
+except:
+    print('dates do not have leading ! ')
+    
+    
 # read in Mississippi River @ Tarbert Landing (input data is in cms)
 MissTarb_cms = [ float(q) for q in TribQ_in[:,[MissRiv_col]] ]
 MissTarb_cfs = [ q/(0.3048**3.0) for q in MissTarb_cms ]
@@ -284,8 +308,10 @@ for d in range(0,ndays):
     
     date = dates_all[d]
     yr = int(date[0:4])                                                   # this will work if date is formatted as YYYYMMDD, or YYYY-MM-DD, etc.
-    month = int(date[4:6])                                                # this will work if date is formatted as YYYYMMDD
-
+    if date_comment == True:
+        month = int(date[4:6])                                                # this will work if date is formatted as YYYYMMDD
+    else:
+        month = int(date[5:7])                                                # this will work if date is formatted as YYYY-MM-DD
     # month, yr = int(date.split('/')[0]), int(date.split('/')[2])        # this will work if date is formatted as MM/DD/YYYY
     # year = date.split('-')[2]                                          # this will work if date is formatted as MM-DD-YYYY
     
@@ -1152,7 +1178,12 @@ for d in range(0,ndays):
 ###   write new TribQ.csv file   ###
 ####################################
 
-with open(TribQ_all_file,mode='w') as TribQ_out:
+if process_observed == True:
+    TribQ_to_write = TribQ_observed_out_file
+else:
+    TribQ_to_write = TribQ_future_out_file
+
+with open(TribQ_to_write,mode='w') as TribQ_out:
     # write header line to TribQ.csv
     line = '1'
     for n in range(2,nTribs+1):
@@ -1244,139 +1275,147 @@ with open(TribQ_all_file,mode='w') as TribQ_out:
         TribQ_out.write('%s\n' % line)
 
 
+if process_sediment == True:
+    if process_observed == True:
+        TribF_to_write = TribF_observed_out_file
+        TribS_to_write = TribS_observed_out_file
+    else:
+        TribF_to_write = TribF_future_out_file
+        TribS_to_write = TribF_future_out_file
 
-#####################################################################
-###   calculate suspended sediment concentrations from flow       ###
-###   rating curves and write new TribF.csv and TribS.csv files   ###
-#####################################################################
-print('reading in formatted TribQ.csv to calculate suspsended sands and fines concentrations.')
-flows_cms = np.genfromtxt(TribQ_all_file,delimiter=',',dtype='float',skip_header=1,usecols=range(0,nTribs))
-dates = np.genfromtxt(TribQ_all_file,delimiter=',',dtype='str',skip_header=1,usecols=[-1]) 
-
-with open(TribF_all_file,mode='w') as fineout:
-    with open(TribS_all_file,mode='w') as sandout:
-            # write header line to TribQ.csv
-        line = '1'
-        for n in range(2,nTribs+1):
-            line = '%s,%s' % (line,n)
-        fineout.write('%s\n' % line)
-        sandout.write('%s\n' % line)
+    #####################################################################
+    ###   calculate suspended sediment concentrations from flow       ###
+    ###   rating curves and write new TribF.csv and TribS.csv files   ###
+    #####################################################################
+    print('reading in formatted TribQ.csv to calculate suspsended sands and fines concentrations.')
+    flows_cms = np.genfromtxt(TribQ_to_write,delimiter=',',dtype='float',skip_header=1,usecols=range(0,nTribs))
+    dates = np.genfromtxt(TribQ_to_write,delimiter=',',dtype='str',skip_header=1,usecols=[-1]) 
+    
+    with open(TribF_to_write,mode='w') as fineout:
+        with open(TribS_to_write,mode='w') as sandout:
+            # write header line
+            line = '1'
+            for n in range(2,nTribs+1):
+                line = '%s,%s' % (line,n)
+            fineout.write('%s\n' % line)
+            sandout.write('%s\n' % line)
+                
+            for nday in range(0,len(dates)):
+                dateout = dates[nday]       # dateout will have the '!  ' prepended to the date string from being read in from TribQ.csv
+                row = flows_cms[nday]
+                
+                fineline = ''
+                sandline = ''
+    
+                for ntrib in range(0,len(row)):
+                    sand_mgl = 0.0          # initialize to 0 mg/L
+                    fine_mgl = 0.0          # initialize to 0 mg/L
+                    q_cms = row[ntrib]
             
-        for nday in range(0,len(dates)):
-            dateout = dates[nday]       # dateout will have the '!  ' prepended to the date string from being read in from TribQ.csv
-            row = flows_cms[nday]
+                    # set local copies of tributary-specific variables that were read in from input file
+                    tribcol = tribs_col[ntrib]
+                    sand_type = sand_types[tribcol]                     # integer storing sand rating curve type id
+                    fine_type = fine_types[tribcol]                    # integer storing fines rating curve type id
+                    trib_area = TSS_trib_areas[tribcol]                 # float storing the tributary area upstream of gage used for TSS rating curves for Florida Parishes tributaries with limited TSS data (see MP23 Appendix B2, section 5.5)
+                    q_maxsand = TSS_qmaxsands[tribcol]                  # float storing flowrate (cms) used to define the maximum flow where peak sand suspension occurs - used to partition TSS into sands and fines (see MP23 Appendix B2, section 5.5)
+                    max_sand_portion = TSS_max_sand_portions[tribcol]   # float storing maximum portion of TSS that can is sand (derived from Miss. River data) - used to partition TSS into sands and fines (see MP23 Appendix B2, section 5.5)
+                        
+                    tpd2mgl = 1000*1000*1000/(max(0.01,q_cms)*1000*86400)         # flow-specific conversion factor for tonnes/day to mg/L    (load to concentration) - max function is to prevent div/zero errors
+                    kgps2mgl = 1000*1000/(max(0.01,q_cms)*1000)         # flow-specific conversion factor for kg/sec to mg/L        (load to concentration) - max function is to prevent div/zero errors
             
-            fineline = ''
-            sandline = ''
-
-            for ntrib in range(0,len(row)):
-                sand_mgl = 0.0          # initialize to 0 mg/L
-                fine_mgl = 0.0          # initialize to 0 mg/L
-                q_cms = row[ntrib]
-        
-                # set local copies of tributary-specific variables that were read in from input file
-                tribcol = tribs_col[ntrib]
-                sand_type = sand_types[tribcol]                     # integer storing sand rating curve type id
-                fine_type = fine_types[tribcol]                    # integer storing fines rating curve type id
-                trib_area = TSS_trib_areas[tribcol]                 # float storing the tributary area upstream of gage used for TSS rating curves for Florida Parishes tributaries with limited TSS data (see MP23 Appendix B2, section 5.5)
-                q_maxsand = TSS_qmaxsands[tribcol]                  # float storing flowrate (cms) used to define the maximum flow where peak sand suspension occurs - used to partition TSS into sands and fines (see MP23 Appendix B2, section 5.5)
-                max_sand_portion = TSS_max_sand_portions[tribcol]   # float storing maximum portion of TSS that can is sand (derived from Miss. River data) - used to partition TSS into sands and fines (see MP23 Appendix B2, section 5.5)
+            
+                    ###################################################################
+                    # Rating curves for gages without any suspended sediment boundary #
+                    ###################################################################
+                    # gage is either not used as an ICM boundary conditon or is only used as a freshwater boundary - no sediment timeseries applied at this boundary in the ICM
+            
+                    # Assume no suspended sand
+                    if sand_type == 0:
+                        sand_mgl = 0.0
+            
+                    # Assume no suspended fines
+                    if fine_type == 0:
+                        fine_mgl = 0.0
+            
+                    ###########################################################################
+                    # Rating curves for gages with Suspended Sand Sediment concentration data #
+                    ###########################################################################
+                    # Assume no suspended sand - gage is either not used as an ICM boundary conditon or is only used as a freshwater boundary - no sediment timeseries applied at this boundary in the ICM
+                    if sand_type == 0:
+                        sand_mgl = 0.0
+            
+                    # Mississippi River sand rating curve - original curve is in sediment load (tonnes/day)
+                    if sand_type == 1:
+                        sand_tpd = 77160000*(1.0 - np.e**(-0.0000002485*q_cms)) - 574800*(1.0 - np.e**(-0.00004122*q_cms))
+                        sand_mgl = sand_tpd*tpd2mgl        
+            
+                    # Atchafalaya River sand rating curve - original curve is in sediment load (tonnes/day)
+                    if sand_type == 2:
+                        sand_mgl = 0.0001113*(q_cms**1.4897)
+            
+                    ###########################################################################
+                    # Rating curves for gages with Suspended Fine Sediment concentration data #
+                    ###########################################################################
+            
+                    # Mississippi River fines rating curve - original curve is in sediment load (tonnes/day)
+                    if fine_type == 1:
+                        fine_tpd =0.002*(q_cms**1.86)
+                        fine_mgl = fine_tpd*tpd2mgl 
+            
+                    # Atchafalaya River fines rating curve - original curve is in sediment load (tonnes/day)
+                    if fine_type == 2:
+                        fine_mgl = 4948.5*(q_cms**-0.356)
+            
+            
+                    #################################################################################
+                    # Rating curves for gages with only Total Suspended Sediment Concentration data #
+                    #################################################################################
+                    # TSS rating curves for all tributaries that do not have enough data for separate rating curves for sands and fines
+                    #   after calculating TSS in mg/L - the TSS will be partitioned into portions sands and fines as a function of discharge - see MP23 Appendix B2, section 5.5 for documentation
+                    if sand_type in [3,4,5,6,7]:
+                    # Tributaries west of Mississippi River (excluding Atchafalaya) - total suspended sediment load rating curve from all USGS paired Q-TSS data west of Miss. River - partitioned into sand/fines
+                        if sand_type == 3:
+                            tss_kg_sec = 0.0382*(q_cms**1.099)
+                            tss_mgl = tss_kg_sec*kgps2mgl
+            
+                        # Florida Parishes TSS rating curve based upon upstream drainage area (from Rachel Roblin MS thesis 2008, UNO)
+                        if sand_type == 4:
+                            tss_mgl = 95.8189*((q_cms/trib_area)**0.2678)
                     
-                tpd2mgl = 1000*1000*1000/(max(0.01,q_cms)*1000*86400)         # flow-specific conversion factor for tonnes/day to mg/L    (load to concentration) - max function is to prevent div/zero errors
-                kgps2mgl = 1000*1000/(max(0.01,q_cms)*1000)         # flow-specific conversion factor for kg/sec to mg/L        (load to concentration) - max function is to prevent div/zero errors
-        
-        
-                ###################################################################
-                # Rating curves for gages without any suspended sediment boundary #
-                ###################################################################
-                # gage is either not used as an ICM boundary conditon or is only used as a freshwater boundary - no sediment timeseries applied at this boundary in the ICM
-        
-                # Assume no suspended sand
-                if sand_type == 0:
-                    sand_mgl = 0.0
-        
-                # Assume no suspended fines
-                if fine_type == 0:
-                    fine_mgl = 0.0
-        
-                ###########################################################################
-                # Rating curves for gages with Suspended Sand Sediment concentration data #
-                ###########################################################################
-                # Assume no suspended sand - gage is either not used as an ICM boundary conditon or is only used as a freshwater boundary - no sediment timeseries applied at this boundary in the ICM
-                if sand_type == 0:
-                    sand_mgl = 0.0
-        
-                # Mississippi River sand rating curve - original curve is in sediment load (tonnes/day)
-                if sand_type == 1:
-                    sand_tpd = 77160000*(1.0 - np.e**(-0.0000002485*q_cms)) - 574800*(1.0 - np.e**(-0.00004122*q_cms))
-                    sand_mgl = sand_tpd*tpd2mgl        
-        
-                # Atchafalaya River sand rating curve - original curve is in sediment load (tonnes/day)
-                if sand_type == 2:
-                    sand_mgl = 0.0001113*(q_cms**1.4897)
-        
-                ###########################################################################
-                # Rating curves for gages with Suspended Fine Sediment concentration data #
-                ###########################################################################
-        
-                # Mississippi River fines rating curve - original curve is in sediment load (tonnes/day)
-                if fine_type == 1:
-                    fine_tpd =0.002*(q_cms**1.86)
-                    fine_mgl = fine_tpd*tpd2mgl 
-        
-                # Atchafalaya River fines rating curve - original curve is in sediment load (tonnes/day)
-                if fine_type == 2:
-                    fine_mgl = 4948.5*(q_cms**-0.356)
-        
-        
-                #################################################################################
-                # Rating curves for gages with only Total Suspended Sediment Concentration data #
-                #################################################################################
-                # TSS rating curves for all tributaries that do not have enough data for separate rating curves for sands and fines
-                #   after calculating TSS in mg/L - the TSS will be partitioned into portions sands and fines as a function of discharge - see MP23 Appendix B2, section 5.5 for documentation
-                if sand_type in [3,4,5,6,7]:
-                # Tributaries west of Mississippi River (excluding Atchafalaya) - total suspended sediment load rating curve from all USGS paired Q-TSS data west of Miss. River - partitioned into sand/fines
-                    if sand_type == 3:
-                        tss_kg_sec = 0.0382*(q_cms**1.099)
-                        tss_mgl = tss_kg_sec*kgps2mgl
-        
-                    # Florida Parishes TSS rating curve based upon upstream drainage area (from Rachel Roblin MS thesis 2008, UNO)
-                    if sand_type == 4:
-                        tss_mgl = 95.8189*((q_cms/trib_area)**0.2678)
-                
-                    # Tangipahoa River TSS rating curve (from USGS paired TSS-Q data)
-                    if sand_type == 5:
-                        tss_mgl = 3.231*(q_cms**0.7867)
-        
-                    # Bouge Chitto TSS rating curve (from USGS paired TSS-Q data)
-                    if sand_type == 6:
-                        tss_mgl = 6.3791*(q_cms**0.4833)
-        
-                    # Pearl River TSS rating curve (from USGS paired TSS-Q data) 
-                    if sand_type == 7:
-                        tss_mgl = 3.0127*(q_cms**0.5987)		
-        
-                    # partition TSS concentration into portion that is sand (based on MP23 analysis of sand/fines ratio in the Mississippi River - see MP23 Appendix B2, section 5.5)
-                    q_qmx = q_cms/q_maxsand
-                    sand_portion = max_sand_portion*(30.292*q_qmx**5 - 113.25*q_qmx**4 + 169.9*q_qmx**3 - 129.38*q_qmx**2 + 51.167*q_qmx- 7.7249)
-                    sand_portion_capped = min(max(0,sand_portion),max_sand_portion)    # apply high-pass filter to avoid negative portion sands and apply low-pass filter to cap portion sand at default value (max_sand_portion) read in from input file
-        
-                    sand_mgl = tss_mgl*sand_portion_capped
-                    fine_mgl = tss_mgl - sand_mgl
-        
-                # high-pass filter to prevent negative concentrations    
-                sand_mgl = max(0,sand_mgl)
-                fine_mgl = max(0,fine_mgl)
-                
-                # append concentrations to daily line that will be written to file
-                if ntrib == 0:
-                    fineline = '%0.4f' % (fine_mgl)
-                    sandline = '%0.4f' % (sand_mgl)
-                else:
-                    fineline = '%s,%0.4f' % (fineline,fine_mgl)
-                    sandline = '%s,%0.4f' % (sandline,sand_mgl)
-                
-                
-                
-            fineout.write('%s,%s\n' % (fineline,dateout))
-            sandout.write('%s,%s\n' % (sandline,dateout))
+                        # Tangipahoa River TSS rating curve (from USGS paired TSS-Q data)
+                        if sand_type == 5:
+                            tss_mgl = 3.231*(q_cms**0.7867)
+            
+                        # Bouge Chitto TSS rating curve (from USGS paired TSS-Q data)
+                        if sand_type == 6:
+                            tss_mgl = 6.3791*(q_cms**0.4833)
+            
+                        # Pearl River TSS rating curve (from USGS paired TSS-Q data) 
+                        if sand_type == 7:
+                            tss_mgl = 3.0127*(q_cms**0.5987)		
+            
+                        # partition TSS concentration into portion that is sand (based on MP23 analysis of sand/fines ratio in the Mississippi River - see MP23 Appendix B2, section 5.5)
+                        q_qmx = q_cms/q_maxsand
+                        sand_portion = max_sand_portion*(30.292*q_qmx**5 - 113.25*q_qmx**4 + 169.9*q_qmx**3 - 129.38*q_qmx**2 + 51.167*q_qmx- 7.7249)
+                        sand_portion_capped = min(max(0,sand_portion),max_sand_portion)    # apply high-pass filter to avoid negative portion sands and apply low-pass filter to cap portion sand at default value (max_sand_portion) read in from input file
+            
+                        sand_mgl = tss_mgl*sand_portion_capped
+                        fine_mgl = tss_mgl - sand_mgl
+            
+                    # high-pass filter to prevent negative concentrations    
+                    sand_mgl = max(0,sand_mgl)
+                    fine_mgl = max(0,fine_mgl)
+                    
+                    # append concentrations to daily line that will be written to file
+                    if ntrib == 0:
+                        fineline = '%0.4f' % (fine_mgl)
+                        sandline = '%0.4f' % (sand_mgl)
+                    else:
+                        fineline = '%s,%0.4f' % (fineline,fine_mgl)
+                        sandline = '%s,%0.4f' % (sandline,sand_mgl)
+                    
+                    
+                    
+                fineout.write('%s,%s\n' % (fineline,dateout))
+                sandout.write('%s,%s\n' % (sandline,dateout))
+    
