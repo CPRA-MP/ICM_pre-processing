@@ -29,7 +29,7 @@ scenario = 'ssp2-4.5'
 TribListFile = 'MP2029_TribQ_columns.csv'
 
 ObsQ_dir = '../observed_tributary_flows/Data_Filled'
-obsQ_in_file = 'MP29_S00_G000_%04d_%04d_obsQ.csv' % (obs_years[0],obs_years[-1])
+ObsQ_all_file = 'MP29_S00_G000_%04d_%04d_obsQ.csv' % (obs_years[0],obs_years[-1])
 TribQ_all_file = 'MP29_S00_G000_%04d_%04d_TribQ.csv' % (obs_years[0],obs_years[-1])
 TribF_all_file = 'MP29_S00_G000_%04d_%04d_TribF.csv' % (obs_years[0],obs_years[-1])
 TribS_all_file = 'MP29_S00_G000_%04d_%04d_TribS.csv' % (obs_years[0],obs_years[-1])
@@ -114,9 +114,9 @@ for nf in range(0,nTribs):
         print('   - %s' % file)
         obsQ[col] = np.genfromtxt(f,delimiter=',',skip_header=1,usecols=[0,1],dtype='str')
 
-    # if tributary is a diversion then read in implementation year
-    if typ in [2,3]:
-        implementation[divnm] = impyr    
+    #  read in implementation year
+    #if typ in [2,3,5]:
+    implementation[divnm] = impyr    
 
 # prepare dictionary key that is all daily dates
 print('restructuring observed data from multiple files')
@@ -143,8 +143,8 @@ for tribcol in tribs_col:
         for dk in obsQ_structured.keys():
             obsQ_structured[dk][tribcol] = 0.0
 
-print('writing all daily flows into single file:  %s' % obsQ_in_file)
-with open(obsQ_in_file,mode='w') as obsQ_out:
+print('writing all daily flows into single file:  %s' % ObsQ_all_file)
+with open(ObsQ_all_file,mode='w') as obsQ_out:
     # write header line to structured obsQ outfile
     line = 'newline'
     for tribcol in tribs_col:
@@ -171,14 +171,14 @@ with open(obsQ_in_file,mode='w') as obsQ_out:
 
 
 print('calculating diversion flows based on operational rating curves')
-trib_cols   = range(0,nTributaries) # first 35 columns of TribQ.csv are tributary flows; diversions start in column 36
-TribQ_in_date_col    = [nTribs]     # last column of input TribQ.csv is the date
+trib_cols   = range(0,nTributaries+nTributaries_null)
+TribQ_in_date_col    = [-1]         # last column of input TribQ.csv is the date
 MissRiv_col = 10                    # column 11 of TribQ.csv is the Miss. River @ Tarbert Landing data
 
-TribQ_in    = np.genfromtxt(TribQ_all_file,delimiter=',',dtype=str,skip_header=1,usecols=trib_cols)
-dates_all   = np.genfromtxt(TribQ_all_file,delimiter=',',dtype=str,skip_header=1,usecols=TribQ_in_date_col)
+TribQ_in    = np.genfromtxt(ObsQ_all_file,delimiter=',',dtype=str,skip_header=1,usecols=trib_cols)
+dates_all   = np.genfromtxt(ObsQ_all_file,delimiter=',',dtype=str,skip_header=1,usecols=TribQ_in_date_col)
 
-dates_all = [d.split()[1] for d in dates_all]
+dates_all = [da.split()[1] for da in dates_all]
 
 # read in Mississippi River @ Tarbert Landing (input data is in cms)
 MissTarb_cms = [ float(q) for q in TribQ_in[:,[MissRiv_col]] ]
@@ -601,19 +601,19 @@ for d in range(0,ndays):
     # MP2023: project 304
     #    Modeled at 850 cfs when Bonnet Carre is at 10,000 cfs increasing linearly to 17,500 cfs 
     #    when Bonnet Carre is at 250,000 cfs
-        
-    impl_yr = implementation['LaBD']
-    
-    if yr <= impl_yr:
-        Qdiv = 0
-    else:
-        if Bonn_cfs[d] < 10000:
-            Qdiv = 0
-        else:
-            Qdiv = min(0.069375*Bonn_cfs[d]+156.25, 175000)
+    #    
+    #impl_yr = implementation['LaBD']
+    #
+    #if yr <= impl_yr:
+    #    Qdiv = 0
+    #else:
+    #    if Bonn_cfs[d] < 10000:
+    #       Qdiv = 0
+    #    else:
+    #        Qdiv = min(0.069375*Bonn_cfs[d]+156.25, 175000)
            
-    LaBD_cfs[d] = Qdiv
-    LaBD_cms[d] = Qdiv*(0.3048**3)
+    #LaBD_cfs[d] = Qdiv
+    #LaBD_cms[d] = Qdiv*(0.3048**3)
 
     
     ############################################
@@ -1129,7 +1129,7 @@ for d in range(0,ndays):
 ###   write new TribQ.csv file   ###
 ####################################
 
-with open(TribQ_out_file,mode='w') as TribQ_out:
+with open(TribQ_all_file,mode='w') as TribQ_out:
     # write header line to TribQ.csv
     line = '1'
     for n in range(2,nTribs+1):
@@ -1139,7 +1139,7 @@ with open(TribQ_out_file,mode='w') as TribQ_out:
     for d in range(0,ndays):
         # write tributary flow read in from original TribQ.csv
         line = '%s' % TribQ_in[d][0]                    # ncol 01 # Neches River at Beaumont TX
-        for t in range(1,nTributaries):
+        for t in range(1,nTributaries+nTributaries_null):
             line = '%s,%s' % (line,TribQ_in[d][t])      # ncol 02 # Sabine River at Ruliff TX
                                                         # ncol 03 # Vinton Canal
                                                         # ncol 04 # Calcasieu River near Kinder LA
@@ -1212,7 +1212,7 @@ with open(TribQ_out_file,mode='w') as TribQ_out:
         line = '%s,%s' % (line,SWPR_cms[d])             # ncol 68 # South West Pass calculated from residual flow to close mass balance on Miss Riv flow in/out
         line = '%s,%s' % (line,IAFT_cms[d])             # ncol 69 # Increase Atchafalaya Flows to Terrebonne
         line = '%s,%s' % (line,AtRD_cms[d])             # ncol 70 # Atchafalaya River Diversion
-        #line = '%s,%s' % (line,LaBD_cms[d])                       # LaBra  nche Diversion
+        #line = '%s,%s' % (line,LaBD_cms[d])                       # LaBranche Diversion
         line = '%s,! %s' % (line, dates_all[d])         # ncol 71 # Date
         
         TribQ_out.write('%s\n' % line)
@@ -1224,11 +1224,11 @@ with open(TribQ_out_file,mode='w') as TribQ_out:
 ###   rating curves and write new TribF.csv and TribS.csv files   ###
 #####################################################################
 print('reading in formatted TribQ.csv to calculate suspsended sands and fines concentrations.')
-flows_cms = np.genfromtxt(TribQ_out_file,delimiter=',',dtype='flt',skip_header=1,usecols=range(0,nTribs))
-dates = np.genfromtxt(TribQ_out_file,delimiter=',',dtype='str',skip_header=1,usecols=[-1]) 
+flows_cms = np.genfromtxt(TribQ_all_file,delimiter=',',dtype='float',skip_header=1,usecols=range(0,nTribs))
+dates = np.genfromtxt(TribQ_all_file,delimiter=',',dtype='str',skip_header=1,usecols=[-1]) 
 
-with open(TribF_out_file,mode='w') as fineout:
-    with open(TribS_out_file,mode='w') as sandout:
+with open(TribF_all_file,mode='w') as fineout:
+    with open(TribS_all_file,mode='w') as sandout:
             # write header line to TribQ.csv
         line = '1'
         for n in range(2,nTribs+1):
