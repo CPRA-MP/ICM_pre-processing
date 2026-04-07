@@ -8,7 +8,7 @@ MP29 FWOAv25 TribQ Column,ributary/Diversion Name,Type flag,Type,Sand_Rating_Cur
 7,Vermilion River at Surrey St at Lafayette LA,1,Tributary-observed,3,3,na,1900,1559,Vermilion_River_at_Surrey_St_at_Lafayette_LA_07386880_filled.csv,117.3910272,0.1,0
 8,Charenton Drainage Canal at Baldwin LA,1,Tributary-observed,3,3,na,1900,429,Charenton_Drainage_Canal_at_Baldwin_LA_07385790_filled.csv,554.5382458,0.1,0
 9,GIWW at Franklin,0,No longer used - replaced with precip/UplandQ,0,0,na,1900,0,GIWW_at_Bayou_Sale_Ridge_near_Franklin_LA_07381670_filled.csv,0,0,0
-10,Atchafalaya River,3,Diversion-calculated,2,2,Atch,1900,896,Atchafalaya_River_at_Simmesport_LA_07381490_filled.csv,0,0,0
+10,Atchafalaya River,1,Diversion-calculated,2,2,Atch,1900,896,Atchafalaya_River_at_Simmesport_LA_07381490_filled.csv,0,0,0
 11,Mississippi River Upstream (Tarbert Landing),1,Tributary-observed,1,1,na,1900,370; 369,Mississippi_River_at_Tarbert_Landing_01100_filled.csv,0,0,0
 12,GIWW at Larose,0,No longer used - replaced with precip/UplandQ,0,0,na,1900,0,GIWW_West_of_Bayou_Lafourche_at_Larose_LA_07381235_filled.csv,0,0,0
 13,Bayou Lafourche at Thibodeaux LA,1,Tributary-observed,3,3,na,1900,911,Bayou_Lafourche_at_Thibodeaux_LA_07381000_filled.csv,31.20457501,0.1,0

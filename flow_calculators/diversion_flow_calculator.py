@@ -75,7 +75,8 @@ for n in range(0,len(tribs_col)):
     TSS_max_sand_portions[tribs_col[n]] = TSS_max_sand_portions_arr[n]  # float storing maximum portion of TSS that can is sand (derived from Miss. River data) - used to partition TSS into sands and fines (see MP23 Appendix B2, section 5.5)
 
 nTributaries_null = 0              # number of riverine input timeseries that are no longer used in and set to zero values in in TribQ, TribF, TribS, and QMult
-nTributaries = 0                   # number of riverine input timeseries included in TribQ, TribF, TribS, and QMult
+nTributaries = 0                   # number of riverine input timeseries with observed flowrates
+nTributaries_calc = 0              # number of riverine input timeseries that are calculated from other observed flows
 nMissRiv_Diversions = 0            # number of Mississippi River diversion timeseries included in TribQ, TribF, TribS, and QMult
 nBFD_Passes = 0                    # number of distributary passes timeseries in the BFD included in TribQ, TribF, TribS, and QMult
 nAtchRiv_Diversions = 0            # number of Atchafalaya River diversion timeseries included in TribQ, TribF, TribS, and QMult
@@ -86,14 +87,14 @@ for tt in tribs_types.values():
     if tt == 1:
         nTributaries += 1
     if tt == 2:
-        nMissRiv_Diversions += 1
+        nTributaries_calc += 1
     if tt == 3:
         nMissRiv_Diversions += 1
     if tt == 4:
         nBFD_Passes += 1
     if tt == 5:
         nAtchRiv_Diversions += 1        
-nTribs = nTributaries_null + nTributaries + nMissRiv_Diversions + nBFD_Passes + nAtchRiv_Diversions # total number of timeseries read in as tributary boundary conditions in TribQ
+nTribs = nTributaries_null + nTributaries + nTributaries_calc + nMissRiv_Diversions + nBFD_Passes + nAtchRiv_Diversions # total number of timeseries read in as tributary boundary conditions in TribQ
 
 # set some empty dictionaries used to format observed data
 implementation = {}
@@ -113,9 +114,10 @@ for nf in range(0,nTribs):
     if typ in [1]:
         print('   - %s' % file)
         obsQ[col] = np.genfromtxt(f,delimiter=',',skip_header=1,usecols=[0,1],dtype='str')
-
+    #if typ in [2]:
+       
     #  read in implementation year
-    #if typ in [2,3,5]:
+ 
     implementation[divnm] = impyr    
 
 # prepare dictionary key that is all daily dates
@@ -141,7 +143,12 @@ for tribcol in tribs_col:
     typ = tribs_types[tribcol]
     if typ != 1:
         for dk in obsQ_structured.keys():
-            obsQ_structured[dk][tribcol] = 0.0
+            if typ == 0:
+                obsQ_structured[dk][tribcol] = 22.2
+            elif typ == 2:
+                obsQ_structured[dk][tribcol] = 33.3
+            else:
+                obsQ_structured[dk][tribcol] = 0.0
 
 print('writing all daily flows into single file:  %s' % ObsQ_all_file)
 with open(ObsQ_all_file,mode='w') as obsQ_out:
@@ -158,11 +165,11 @@ with open(ObsQ_all_file,mode='w') as obsQ_out:
     for d in obsQ_structured.keys():
         line = 'newline'
         for tribcol in tribs_col:
-            if tribs_types[tribcol] == 1:
-                qout = obsQ_structured[d][tribcol]
-            else:
-                qout = 0.0
-
+##            if tribs_types[tribcol] == 1:
+##                qout = obsQ_structured[d][tribcol]
+##            else:
+##                qout = 0.0
+            qout = obsQ_structured[d][tribcol]
             if line == 'newline':
                 line = '%0.4f' % qout
             else:
@@ -171,7 +178,7 @@ with open(ObsQ_all_file,mode='w') as obsQ_out:
 
 
 print('calculating diversion flows based on operational rating curves')
-trib_cols   = range(0,nTributaries+nTributaries_null)
+trib_cols   = range(0,nTributaries+nTributaries_null+nTributaries_calc)
 TribQ_in_date_col    = [-1]         # last column of input TribQ.csv is the date
 MissRiv_col = 10                    # column 11 of TribQ.csv is the Miss. River @ Tarbert Landing data
 
@@ -196,8 +203,12 @@ IAFT_cfs = np.zeros(ndays)      # Increase Atchafalaya Flows to Terrebonne
 IAFT_cms = np.zeros(ndays)
 AtRD_cfs = np.zeros(ndays)      # Atchafalaya River Diversion
 AtRD_cms = np.zeros(ndays)
-BLaF_cfs = np.zeros(ndays)      # Bayou Lafourche Diversion / Freshwater Delivery to Westeran Barataria / Upper Barataria Hydrologic Restoration
+BLaF_cfs = np.zeros(ndays)      # Bayou Lafourche Diversion
 BLaF_cms = np.zeros(ndays)
+FDWB_cfs = np.zeros(ndays)      # Freshwater Delivery to Westeran Barataria
+FDWB_cms = np.zeros(ndays)
+UBaH_cfs = np.zeros(ndays)      # Upper Barataria Hydrologic Restoration
+UBaH_cms = np.zeros(ndays)
 UFWD_cfs = np.zeros(ndays)      # Union Freshwater Diversion
 UFWD_cms = np.zeros(ndays)
 WMPD_cfs = np.zeros(ndays)      # West Maurepas Sediment Diversion
@@ -234,8 +245,8 @@ MBaD_cfs = np.zeros(ndays)      # Mid-Barataria Diversion
 MBaD_cms = np.zeros(ndays) 
 WPLH_cfs = np.zeros(ndays)      # West Point a la Hache
 WPLH_cms = np.zeros(ndays) 
-#LPlq_cfs = np.zeros(ndays)      # Lower Plaquemines River Sediment Plan (timeseries not used - added as additional flow to WPLH timeseries)
-#LPlq_cms = np.zeros(ndays) 
+LPlq_cfs = np.zeros(ndays)      # Lower Plaquemines River Sediment Plan
+LPlq_cms = np.zeros(ndays) 
 LBaD_cfs = np.zeros(ndays)      # Lower Barataria Diversion
 LBaD_cms = np.zeros(ndays) 
 LBrD_cfs = np.zeros(ndays)      # Lower Breton Diversion
@@ -368,17 +379,12 @@ for d in range(0,ndays):
     
     #####################################################
     ###          Bayou Lafourche Diversion            ###
-    ###  & Freshwater Delivery to Western Barataria   ###
-    ###  &  Upper Barataria Hydrologic Restoration    ###
     #####################################################
     # river mile 176
     # current condition is 500 cfs but an additional 1000 cfs pump is in the permitting stage as of 4/27/2021
     # Constant diversion flow of 1,500 cfs
     impl_yr  = implementation['BLaF']
-    impl_yr2 = implementation['FDWB']
-    impl_yr3 = implementation['UBaH']
-    
-    # Bayou Lafourche Diversion (existing pump station - in FWOA)
+
     if yr <= impl_yr:
         Qdiv = 0
     else:   
@@ -386,34 +392,55 @@ for d in range(0,ndays):
             Qdiv = 1500
         else:
             Qdiv = Qresidual
-    
+    # update Bayou LaFourche array with diverted volumes    
+
+    BLaF_cfs[d] = Qdiv
+    BLaF_cms[d] = Qdiv*(0.3048**3)
+    Qresidual -= Qdiv
+
+    #####################################################
+    ###    Freshwater Delivery to Western Barataria   ###
+    #####################################################
+    # river mile 176
     # Freshwater Delivery to Western Barataria
     # MP2023: project 322
     # add additional 500 cfs capacity to Bayou Lafourche pump
-    if yr <= impl_yr2:
-        Qdiv += 0
+
+    impl_yr = implementation['FDWB']
+
+    if yr <= impl_yr:
+        Qdiv = 0
     else:   
         if Qresidual >= 500:
             Qdiv += 500
         else:
             Qdiv += Qresidual
+       
+    FDWB_cfs[d] = Qdiv
+    FDWB_cms[d] = Qdiv*(0.3048**3)
+    Qresidual -= Qdiv
 
+    #####################################################
+    ###    Upper Barataria Hydrologic Restoration     ###
+    #####################################################
     # Upper Barataria Hydrologic Restoration
     # MP2023: project 324
     #  Construction of a 750 cfs pump/siphon structure along Bayou Lafourche to supply freshwater into the marshes, bayous, and lakes of the Upper Barataria Sub-Basin
     # pump 750 cfs into Bayou Lafourche to be routed down BLaF and eventually eastward into Upper Barataria
     # add this diversion flow to the pre-existing Bayou Lafourche flow calculated above
-    if yr <= impl_yr3:
-        Qdiv += 0
+
+    impl_yr = implementation['UBaH']
+
+    if yr <= impl_yr:
+        Qdiv = 0
     else:   
         if Qresidual >= 750:
             Qdiv += 750
         else:
             Qdiv += Qresidual
 
-    # update Bayou LaFourche array with diverted volumes from all possible projects        
-    BLaF_cfs[d] = Qdiv
-    BLaF_cms[d] = Qdiv*(0.3048**3)
+    UBaH_cfs[d] = Qdiv
+    UBaH_cms[d] = Qdiv*(0.3048**3)
     Qresidual -= Qdiv
 
     
@@ -896,22 +923,18 @@ for d in range(0,ndays):
     
     impl_yr = implementation['LPlq']
     
-    if impl_yr < 9999: 
-        if yr <= impl_yr:
+    if yr <= impl_yr:
+        Qdiv = 0
+    else:
+        if month > 4 and month < 12:
             Qdiv = 0
         else:
-            # add WPLH calculated flow back into residual flow since this diversion will replace that WPLH timeseries
-            if yr >= implementation['WPLH'] :
-                Qresidual += WPLH_cfs[d]  
-        
-            if month > 4 and month < 12:
-                Qdiv = 0
-            else:
-                # diversion flowrate is 8x for (1) WPLH and (7) pumps as part of LPlq
-                Qdiv = 8.0*min(max(0, Qresidual/225.0 - 1333.333 ), 2000.0)
-    
-        WPLH_cfs[d] = Qdiv
-        WPLH_cms[d] = Qdiv*(0.3048**3)
+            # diversion flowrate is 8x original WPLH flows...WPLH is added above, add 7 additional if this diversion is active
+            Qdiv = 7.0*min(max(0, 456.35377*np.log(Qresidual*0.3048**3)-4049.4586),2118.87997)
+
+        LPlq_cfs[d] = Qdiv
+        LPlq_cms[d] = Qdiv*(0.3048**3)
+ 
         Qresidual  -= Qdiv    
     
     
@@ -1019,7 +1042,7 @@ for d in range(0,ndays):
     # river mile 20
     # Diversion flow of rating curve 0.1011*Qresidual-25159
         
-    Qdiv = 0.1011*Qresidual-25159
+    Qdiv = max(0.0,0.1011*Qresidual-25159)
         
     FStP_cfs[d] = Qdiv  
     FStP_cms[d] = Qdiv*(0.3048**3)
@@ -1139,7 +1162,7 @@ with open(TribQ_all_file,mode='w') as TribQ_out:
     for d in range(0,ndays):
         # write tributary flow read in from original TribQ.csv
         line = '%s' % TribQ_in[d][0]                    # ncol 01 # Neches River at Beaumont TX
-        for t in range(1,nTributaries+nTributaries_null):
+        for t in range(1,nTributaries+nTributaries_null+nTributaries_calc):
             line = '%s,%s' % (line,TribQ_in[d][t])      # ncol 02 # Sabine River at Ruliff TX
                                                         # ncol 03 # Vinton Canal
                                                         # ncol 04 # Calcasieu River near Kinder LA
@@ -1170,50 +1193,53 @@ with open(TribQ_all_file,mode='w') as TribQ_out:
                                                         # ncol 29 # Violet Runoff
                                                         # ncol 30 # NE Lake Pontchartrain ungaged drainage (Bayou Bonfouca)
                                                         # ncol 31 # SE Lake Pontchartrain ungaged drainage (Orleans Parish)
-                                                        # ncol 32 # S Lake Pontchartrain ungaged drainage (Jefferson Parish)
+                                                        # ncol 32 # SW Lake Pontchartrain ungaged drainage (Jefferson Parish)
                                                         # ncol 33 # SW Lake Pontchartrain ungaged drainage
                                                         # ncol 34 # S Lake Maurepas ungaged drainage
                                                         # ncol 35 # NE Lake Pontchartrain ungaged drainage (Bayou LaCombe)      
 
         # write calculated diversion/pass flow calculated above
         line = '%s,%s' % (line,Morg_cms[d])             # ncol 36 # Morganza Spillway
-        line = '%s,%s' % (line,BLaF_cms[d])             # ncol 37 # Bayou LaFourche Diversion (including additional flow for Upper Barataria Hydrologic Restoration)
-        line = '%s,%s' % (line,UFWD_cms[d])             # ncol 38 # Union Freshwater Diversion
-        line = '%s,%s' % (line,WMPD_cms[d])             # ncol 39 # West Maurepas Diversion
-        line = '%s,%s' % (line,MSRM_cms[d])             # ncol 40 # Mississippi River Reintroduction in Maurepas Swamp (East Maurepas Diversion in 2017 MP)
-        line = '%s,%s' % (line,EdDI_cms[d])             # ncol 41 # Edgard Diversion
-        line = '%s,%s' % (line,Bonn_cms[d])             # ncol 42 # Bonnet Carre
-        line = '%s,%s' % (line,MLBD_cms[d])             # ncol 43 # Manchac Landbridge Diversion
-        line = '%s,%s' % (line,LaBr_cms[d])             # ncol 44 # LaBranche Hydrologic Restoration
-        line = '%s,%s' % (line,DavP_cms[d])             # ncol 45 # Davis Pond
-        line = '%s,%s' % (line,AmaD_cms[d])             # ncol 46 # Ama Sediment Diversion
-        line = '%s,%s' % (line,IHNC_cms[d])             # ncol 47 # Inner Harbor Navigational Canal
-        line = '%s,%s' % (line,CWDI_cms[d])             # ncol 48 # Central Wetlands Diversion
-        line = '%s,%s' % (line,Caer_cms[d])             # ncol 49 # Caernarvon
-        line = '%s,%s' % (line,UBrD_cms[d])             # ncol 50 # Upper Breton Diversion
-        line = '%s,%s' % (line,MBrD_cms[d])             # ncol 51 # Mid-Breton Sound Diversion
-        line = '%s,%s' % (line,MBaD_cms[d])             # ncol 52 # Mid-Barataria Diversion
-        line = '%s,%s' % (line,Naom_cms[d])             # ncol 53 # Naomi
-        line = '%s,%s' % (line,WPLH_cms[d])             # ncol 54 # West Point a la Hache (including additional flow for Lower Plaquemines River Sediment Plan)
-        line = '%s,%s' % (line,LBaD_cms[d])             # ncol 55 # Lower Barataria Diversion
-        line = '%s,%s' % (line,LBrD_cms[d])             # ncol 56 # Lower Breton Diversion
-        line = '%s,%s' % (line,MGPS_cms[d])             # ncol 57 # Mardi Gras Pass
-        line = '%s,%s' % (line,Bohe_cms[d])             # ncol 58 # Bohemia
-        line = '%s,%s' % (line,Ostr_cms[d])             # ncol 59 # Ostrica
-        line = '%s,%s' % (line,FStP_cms[d])             # ncol 60 # Ft St Phillip
-        line = '%s,%s' % (line,Bapt_cms[d])             # ncol 61 # Baptiste Collette
-        line = '%s,%s' % (line,GrPa_cms[d])             # ncol 62 # Grand Pass
-        line = '%s,%s' % (line,WBay_cms[d])             # ncol 63 # West Bay Diversion
-        line = '%s,%s' % (line,SCut_cms[d])             # ncol 64 # SmallCuts
-        line = '%s,%s' % (line,CGap_cms[d])             # ncol 65 # Cubits Gap
-        line = '%s,%s' % (line,PLou_cms[d])             # ncol 66 # Pass A Loutre
-        line = '%s,%s' % (line,SPas_cms[d])             # ncol 67 # South Pass
-        #line = '%s,%s' % (line,SWPS_cms[d])             # ncol 68 # South West Pass calculated from curve (not used in model)
-        line = '%s,%s' % (line,SWPR_cms[d])             # ncol 68 # South West Pass calculated from residual flow to close mass balance on Miss Riv flow in/out
-        line = '%s,%s' % (line,IAFT_cms[d])             # ncol 69 # Increase Atchafalaya Flows to Terrebonne
-        line = '%s,%s' % (line,AtRD_cms[d])             # ncol 70 # Atchafalaya River Diversion
+        line = '%s,%s' % (line,BLaF_cms[d])             # ncol 37 # Bayou LaFourche Diversion
+        line = '%s,%s' % (line,FDWB_cms[d])             # ncol 38 # Freshwater Delivery to Western Barataria
+        line = '%s,%s' % (line,UBaH_cms[d])             # ncol 39 # Upper Barataria Hydrologic Restoration
+        line = '%s,%s' % (line,UFWD_cms[d])             # ncol 40 # Union Freshwater Diversion
+        line = '%s,%s' % (line,WMPD_cms[d])             # ncol 41 # West Maurepas Diversion
+        line = '%s,%s' % (line,MSRM_cms[d])             # ncol 42 # Mississippi River Reintroduction in Maurepas Swamp (East Maurepas Diversion in 2017 MP)
+        line = '%s,%s' % (line,EdDI_cms[d])             # ncol 43 # Edgard Diversion
+        line = '%s,%s' % (line,Bonn_cms[d])             # ncol 44 # Bonnet Carre
+        line = '%s,%s' % (line,MLBD_cms[d])             # ncol 45 # Manchac Landbridge Diversion
+        line = '%s,%s' % (line,LaBr_cms[d])             # ncol 46 # LaBranche Hydrologic Restoration
+        line = '%s,%s' % (line,DavP_cms[d])             # ncol 47 # Davis Pond
+        line = '%s,%s' % (line,AmaD_cms[d])             # ncol 48 # Ama Sediment Diversion
+        line = '%s,%s' % (line,IHNC_cms[d])             # ncol 49 # Inner Harbor Navigational Canal
+        line = '%s,%s' % (line,CWDI_cms[d])             # ncol 50 # Central Wetlands Diversion
+        line = '%s,%s' % (line,Caer_cms[d])             # ncol 51 # Caernarvon
+        line = '%s,%s' % (line,UBrD_cms[d])             # ncol 52 # Upper Breton Diversion
+        line = '%s,%s' % (line,MBrD_cms[d])             # ncol 53 # Mid-Breton Sound Diversion
+        line = '%s,%s' % (line,MBaD_cms[d])             # ncol 54 # Mid-Barataria Diversion
+        line = '%s,%s' % (line,Naom_cms[d])             # ncol 55 # Naomi
+        line = '%s,%s' % (line,WPLH_cms[d])             # ncol 56 # West Point a la Hache
+        line = '%s,%s' % (line,LPlq_cms[d])             # ncol 57 # Lower Plaquemines River Sediment Plan)
+        line = '%s,%s' % (line,LBaD_cms[d])             # ncol 58 # Lower Barataria Diversion
+        line = '%s,%s' % (line,LBrD_cms[d])             # ncol 59 # Lower Breton Diversion
+        line = '%s,%s' % (line,MGPS_cms[d])             # ncol 60 # Mardi Gras Pass
+        line = '%s,%s' % (line,Bohe_cms[d])             # ncol 61 # Bohemia
+        line = '%s,%s' % (line,Ostr_cms[d])             # ncol 62 # Ostrica
+        line = '%s,%s' % (line,FStP_cms[d])             # ncol 63 # Ft St Phillip
+        line = '%s,%s' % (line,Bapt_cms[d])             # ncol 64 # Baptiste Collette
+        line = '%s,%s' % (line,GrPa_cms[d])             # ncol 65 # Grand Pass
+        line = '%s,%s' % (line,WBay_cms[d])             # ncol 66 # West Bay Diversion
+        line = '%s,%s' % (line,SCut_cms[d])             # ncol 67 # SmallCuts
+        line = '%s,%s' % (line,CGap_cms[d])             # ncol 68 # Cubits Gap
+        line = '%s,%s' % (line,PLou_cms[d])             # ncol 69 # Pass A Loutre
+        line = '%s,%s' % (line,SPas_cms[d])             # ncol 70 # South Pass
+        #line = '%s,%s' % (line,SWPS_cms[d])             # ncol 71 # South West Pass calculated from curve (not used in model)
+        line = '%s,%s' % (line,SWPR_cms[d])             # ncol 71 # South West Pass calculated from residual flow to close mass balance on Miss Riv flow in/out
+        line = '%s,%s' % (line,IAFT_cms[d])             # ncol 72 # Increase Atchafalaya Flows to Terrebonne
+        line = '%s,%s' % (line,AtRD_cms[d])             # ncol 73 # Atchafalaya River Diversion
         #line = '%s,%s' % (line,LaBD_cms[d])                       # LaBranche Diversion
-        line = '%s,! %s' % (line, dates_all[d])         # ncol 71 # Date
+        line = '%s,! %s' % (line, dates_all[d])         # ncol 74 # Date
         
         TribQ_out.write('%s\n' % line)
 
@@ -1233,12 +1259,12 @@ with open(TribF_all_file,mode='w') as fineout:
         line = '1'
         for n in range(2,nTribs+1):
             line = '%s,%s' % (line,n)
-            fineout.write('%s\n' % line)
-            sandout.write('%s\n' % line)
+        fineout.write('%s\n' % line)
+        sandout.write('%s\n' % line)
             
         for nday in range(0,len(dates)):
             dateout = dates[nday]       # dateout will have the '!  ' prepended to the date string from being read in from TribQ.csv
-            row = flows_cms(nday)
+            row = flows_cms[nday]
             
             fineline = ''
             sandline = ''
@@ -1251,7 +1277,7 @@ with open(TribF_all_file,mode='w') as fineout:
                 # set local copies of tributary-specific variables that were read in from input file
                 tribcol = tribs_col[ntrib]
                 sand_type = sand_types[tribcol]                     # integer storing sand rating curve type id
-                fines_type = fine_types[tribcol]                    # integer storing fines rating curve type id
+                fine_type = fine_types[tribcol]                    # integer storing fines rating curve type id
                 trib_area = TSS_trib_areas[tribcol]                 # float storing the tributary area upstream of gage used for TSS rating curves for Florida Parishes tributaries with limited TSS data (see MP23 Appendix B2, section 5.5)
                 q_maxsand = TSS_qmaxsands[tribcol]                  # float storing flowrate (cms) used to define the maximum flow where peak sand suspension occurs - used to partition TSS into sands and fines (see MP23 Appendix B2, section 5.5)
                 max_sand_portion = TSS_max_sand_portions[tribcol]   # float storing maximum portion of TSS that can is sand (derived from Miss. River data) - used to partition TSS into sands and fines (see MP23 Appendix B2, section 5.5)
@@ -1312,7 +1338,7 @@ with open(TribF_all_file,mode='w') as fineout:
                 # Tributaries west of Mississippi River (excluding Atchafalaya) - total suspended sediment load rating curve from all USGS paired Q-TSS data west of Miss. River - partitioned into sand/fines
                     if sand_type == 3:
                         tss_kg_sec = 0.0382*(q_cms**1.099)
-                        tss_mgl = sand_kg_sec*kgps2mgl
+                        tss_mgl = tss_kg_sec*kgps2mgl
         
                     # Florida Parishes TSS rating curve based upon upstream drainage area (from Rachel Roblin MS thesis 2008, UNO)
                     if sand_type == 4:
