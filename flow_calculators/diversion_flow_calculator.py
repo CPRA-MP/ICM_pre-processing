@@ -28,7 +28,7 @@ fut_years = range(2025,2080)
 scenario = 'ssp2-4.5'
 TribListFile = 'MP2029_TribQ_columns.csv'
 
-process_observed = False
+process_observed = True
 process_sediment = False
 
 ObsQ_dir = '../observed_tributary_flows/Data_Filled'
@@ -157,9 +157,9 @@ else:
         if typ != 1:
             for dk in obsQ_structured.keys():
                 if typ == 0:
-                    obsQ_structured[dk][tribcol] = 22.2
+                    obsQ_structured[dk][tribcol] = 0.0
                 elif typ == 2:
-                    obsQ_structured[dk][tribcol] = 33.3
+                    obsQ_structured[dk][tribcol] = 0.0
                 else:
                     obsQ_structured[dk][tribcol] = 0.0
     
@@ -1186,10 +1186,10 @@ else:
 with open(TribQ_to_write,mode='w') as TribQ_out:
     # write header line to TribQ.csv
     line = '1'
-    for n in range(2,nTribs+1):
+    for n in range(2,nTribs):
         line = '%s,%s' % (line,n)
     
-    TribQ_out.write('%s\n' % line)          
+    TribQ_out.write('%s,! yyyy-mm-dd\n' % line)          
     for d in range(0,ndays):
         # write tributary flow read in from original TribQ.csv
         line = '%s' % TribQ_in[d][0]                    # ncol 01 # Neches River at Beaumont TX
