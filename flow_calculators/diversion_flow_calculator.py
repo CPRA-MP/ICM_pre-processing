@@ -174,7 +174,7 @@ else:
                 line = '%s,%s' % (line,tribcol)
         obsQ_out.write('%s\n' % line)          
     
-        # write daily outputs to strucdtured obsQ outfile
+        # write daily outputs to structured obsQ outfile
         for d in obsQ_structured.keys():
             line = 'newline'
             for tribcol in tribs_col:
