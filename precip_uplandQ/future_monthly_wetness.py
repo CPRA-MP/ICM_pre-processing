@@ -6,7 +6,7 @@ SSP = "ssp2-4.5"
 start_year = 2025
 end_year = 2079
 output_filename_no_leap = f"MP29_future_conditions_AORCprecip_uplandQ_{start_year}_{end_year}_{SSP}_no_leap.csv"
-output_filename = f"MP29_future_conditions_AORCprecip_uplandQ_{start_year}_{end_year}_{SSP}.csv"
+output_filename = f"MP29_{SSP}_future_conditions_AORCprecip_uplandQ_{start_year}_{end_year}.csv"
 
 # this is the conditions matrix developed using the coastal basin averages
 conditions_file = "../precip_uplandQ/representative_rainfall_months_2006-2023.csv"
