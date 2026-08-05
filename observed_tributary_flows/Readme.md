@@ -13,6 +13,8 @@ This folder contains gap-filled **daily tributary discharge time series** and as
   - [Table 1: Rating curve fit (R²)](#table-1-rating-curve-fit-r²)
 - [Figures](#figures)
 - [Technical memorandum](#technical-memorandum)
+- [Appendix](#appendix)
+  - [Discharge Figures](#discharge-figures)
 
 ## Folder contents
 
@@ -27,7 +29,6 @@ The observed tributary flow time series processing and plot generation are imple
 
 Recommended usage is to run the notebook top-to-bottom in JupyterLab / Jupyter Notebook.
 
-> Note: Additional notebooks/scripts will be added later for generating rating-curve figures and README will be updated.
 
 ## Outputs
 
@@ -57,7 +58,7 @@ The rating curves were evaluated for the expanded time series (01/01/2006 to 09/
 
 **Table 1: Fit of tributary flow rating curves to observed data.** The coefficient of determination (R²) for the time period used to develop the original rating curves (01/01/2006 to 05/31/2014) and for the expanded time period incorporating additional data (01/01/2006 to 09/01/2025).
 
-| Station ID | Station Name | R2 (Historical, 2006-2014) | R2 (Expanded, 2006-2025) |
+| Station ID | Station Name | R² (Historical, 2006-2014) | R² (Expanded, 2006-2025) |
 |---:|---|---:|---:|
 | 7381490 | Atchafalaya River at Simmesport, LA | 0.99 | 0.99 |
 | 2470629 | Mobile River at River Mile 31 at Bucks, AL | 0.79 | 0.78 |
@@ -77,21 +78,20 @@ The rating curves were evaluated for the expanded time series (01/01/2006 to 09/
 
 ### Figure 1 — Mermentau River at Mermentau, LA (USGS 08012150)
 ![Figure 1: Mermentau River at Mermentau, LA (USGS 08012150) discharge time series](Plots_Discharge/Mermentau_River_at_Mermentau,_LA_08012150_discharge.png)
+*Figure 1: Mermentau River at Mermentau, LA (USGS 08012150) gap-filled daily discharge time series showing original observations (black), short-gap interpolations (teal), rating-curve filled data (orange), and long-gap interpolations (purple).*
 
 ### Figure 2 — Bayou Lafourche (USGS 07381000)
-*Figure 2: Stage to discharge rating curve at Bayou Lafourche (USGS 07381000) showing historical (blue) versus expanded/post‑historical (orange) observations with the rating curve (magenta).*
-
-> TODO: Add the Figure 2 PNG to `Plots_Discharge/` and link it here.
+![Figure 2: Bayou Lafourche at Thibodeaux (USGS 07381000) discharge time series](Plots_Discharge/Bayou_Lafourche_at_Thibodeaux_LA_07381000_discharge.png)
+*Figure 2: Bayou Lafourche (USGS 07381000) gap-filled daily discharge time series showing original observations (black), short-gap interpolations (teal), rating-curve filled data (orange), and long-gap interpolations (purple).*
 
 ### Figure 3 — Bayou Lacassine near Lake Arthur, LA (USGS 08012470)
 ![Figure 3: Bayou Lacassine near Lake Arthur, LA (USGS 08012470) discharge time series](Plots_Discharge/Bayou_Lacassine_near_Lake_Arthur_LA_08012470_discharge.png)
-
-*Figure 3 (caption): Bayou Lacassine near Lake Arthur, LA (USGS 08012470) gap-filled daily discharge time series showing original observations (black), short-gap interpolations (orange), rating-curve filled data (purple), and long-gap interpolations (teal).*
+*Figure 3: Bayou Lacassine near Lake Arthur, LA (USGS 08012470) gap-filled daily discharge time series showing original observations (black), short-gap interpolations (teal), rating-curve filled data (orange), and long-gap interpolations (purple).*
 
 ### Figure 4 — Mobile River at River Mile 31 (USGS 02470629)
-*Figure 4: Stage to discharge rating curve at Mobile River at River Mile 31 (USGS 02470629) showing historical (blue) versus expanded/post‑historical (orange) observations with the rating curve (magenta).*
+![Figure 4: Mobile River at River Mile 31 at Bucks, AL (USGS 02470629) rating curve](Plots_Rating_Curve/02470629_Mobile%20River%20at%20River%20Mile%2031%20at%20Bucks,%20AL_Target_H_with_RC.png)
 
-> TODO: Add the Figure 4 PNG to `Plots_Discharge/` and link it here.
+*Figure 4: Stage to discharge rating curve at Mobile River at River Mile 31 (USGS 02470629) showing historical (blue) versus expanded/post‑historical (orange) observations with the rating curve (magenta).*
 
 ---
 
@@ -99,7 +99,7 @@ The rating curves were evaluated for the expanded time series (01/01/2006 to 09/
 
 ### 2.0 Introduction
 
-To support development of the 2029 Coastal Master Plan (CMP), tributary flow datasets that serve as boundary conditions for the 2029 CMP Integrated Compartment Model were updated by incorporating new data and generally following the methods developed for the 2017 CMP ([Attachment C3-26, Coastal Master Plan 2017 (PDF)](https://coastal.la.gov/wp-content/uploads/2017/04/Attachment-C3-26_FINAL_03.08.2017.pdf)).
+To support development of the 2029 Coastal Master Plan (MP29), tributary flow datasets that serve as boundary conditions for the MP29 Integrated Compartment Model were updated by incorporating new data and generally following the methods developed for the 2017 plan ([Attachment C3-26, Coastal Master Plan 2017 (PDF)](https://coastal.la.gov/wp-content/uploads/2017/04/Attachment-C3-26_FINAL_03.08.2017.pdf)).
 
 #### Objectives
 
@@ -109,7 +109,7 @@ The first objective was to develop daily averaged discharge time series for trib
 
 #### Data Retrieval and Processing
 
-Tributary data were downloaded from the United States Geological Survey’s (USGS) National Water Information System (NWIS) ([https://waterdata.usgs.gov/nwis](https://waterdata.usgs.gov/nwis)) ([https://waterdata.usgs.gov/](https://waterdata.usgs) for the time period 01/01/2006 to 09/01/2025. USGS data were retrieved from NWIS using the data retrieval Python package (dataretrieval.nwis.get_dv). Tributary data from the United States Army Corps of Engineers ([https://rivergages.mvr.usace.army.mil/WaterControl/stationinfo2.cfm?sid=01100Q](https://rivergages.mvr.usace.army.mil/WaterControl/stationinfo2.cfm?sid=01100Q)) for the time period 01/01/2006 to 09/01/2025 were downloaded locally since automating download was not possible without Representational State Transfer Application Programming Interfaces (REST APIs).
+Tributary data were downloaded from the United States Geological Survey’s (USGS) National Water Information System (NWIS) ([https://waterdata.usgs.gov/nwis](https://waterdata.usgs.gov/nwis)) for the time period 01/01/2006 to 09/01/2025. USGS data were retrieved from NWIS using the data retrieval Python package (dataretrieval.nwis.get_dv). Tributary data from the United States Army Corps of Engineers ([https://rivergages.mvr.usace.army.mil/WaterControl/stationinfo2.cfm?sid=01100Q](https://rivergages.mvr.usace.army.mil/WaterControl/stationinfo2.cfm?sid=01100Q)) for the time period 01/01/2006 to 09/01/2025 were downloaded locally since automating download was not possible without Representational State Transfer Application Programming Interfaces (REST APIs).
 
 Data processing and analysis was implemented using code developed in Python as a reproducible workflow. The Python code used to generate these outputs is available in this repository and folder: [`files/observed_tributary_flows/process_tributary_flow_data.ipynb`](process_tributary_flow_data.ipynb).
 
@@ -118,7 +118,7 @@ The original downloaded data were converted to metric units and reindexed to a d
 • Data gaps with duration less than or equal to 3 days were filled by linear interpolation  
 • Data gaps with duration greater than 3 days were filled using a rating curve  
 
-Short data gaps with a duration less than or equal to 3 days were filled first with linear interpolation. Rating curves developed for the 2017 CMP were used as the initial equations to fill data gaps with a duration greater than 3 days (Section 2.2.2 in [Attachment-C3-26_FINAL_03.08.2017.pdf](https://coastal.la.gov/wp-content/uploads/2017/04/Attachment-C3-26_FINAL_03.08.2017.pdf)). These rating curves identified both stage to discharge (Q to H) and discharge to discharge (Q to Q) rating curves for stations with missing data for a target (dependent station) from an independent station. For some stations, there were also data gaps in the independent data used for the rating curves. In these instances, these gaps were filled using linear interpolation. Any additional missing data, for example at the start or end of a discharge time series was flagged as unfillable.
+Short data gaps with a duration less than or equal to 3 days were filled first with linear interpolation. Rating curves developed for the 2017 plan were used as the initial equations to fill data gaps with a duration greater than 3 days (Section 2.2.2 in [Attachment-C3-26_FINAL_03.08.2017.pdf](https://coastal.la.gov/wp-content/uploads/2017/04/Attachment-C3-26_FINAL_03.08.2017.pdf)). These rating curves identified both stage to discharge (Q to H) and discharge to discharge (Q to Q) rating curves for stations with missing data for a target (dependent station) from an independent station. For some stations, there were also data gaps in the independent data used for the rating curves. In these instances, these gaps were filled using linear interpolation. Any additional missing data, for example at the start or end of a discharge time series was flagged as unfillable.
 
 #### Outputs
 
@@ -134,7 +134,7 @@ The code also automates saving PNG plots of the processed daily discharge time s
 
 ### Evaluation and Updating of Rating Curves
 
-The rating curves were evaluated for an expanded time series (01/01/2006 to 09/01/2025), which incorporated data that had become available after the original analysis period (01/01/2006 to 5/31/2014). The analysis compared the fit of the rating curves measured between the expanded time series data and the original time series ([Attachment-C3-26_FINAL_03.08.2017.pdf](https://coastal.la.gov/wp-content/uploads/2017/04/Attachment-C3-26_FINAL). For both time periods, statistical metrics were computed using only samples where original (not gap filled) observations were available at both the target station and analog stations. The 2017 analysis (Attachment-C3-26_FINAL_03.08.2017.pdf) appears to have used gap filled values for the computed statistical metrics. Therefore, metrics from the initial 2017 analysis are not directly comparable since the methodology used differs. The fit was assessed both using visual inspection and using the coefficient of determination (R2), root mean square error, bias, and Nash-Sutcliffe efficiency.
+The rating curves were evaluated for an expanded time series (01/01/2006 to 09/01/2025), which incorporated data that had become available after the original analysis period (01/01/2006 to 05/31/2014). The analysis compared the fit of the rating curves measured between the expanded time series data and the original time series ([Attachment-C3-26_FINAL_03.08.2017.pdf](https://coastal.la.gov/wp-content/uploads/2017/04/Attachment-C3-26_FINAL). For both time periods, statistical metrics were computed using only samples where original (not gap filled) observations were available at both the target station and analog stations. The 2017 analysis (Attachment-C3-26_FINAL_03.08.2017.pdf) appears to have used gap filled values for the computed statistical metrics. Therefore, metrics from the initial 2017 analysis are not directly comparable since the methodology used differs. The fit was assessed both using visual inspection and using the coefficient of determination (R2), root mean square error, bias, and Nash-Sutcliffe efficiency.
 
 Stations where the fit of the rating curve equation had a change based on visual inspection or decreased substantially for the expanded time series compared to the original time period over which the rating curves were developed, were further analyzed. For these stations, the rating curves were updated based on knowledge of environmental factors (e.g., floodplain connectivity) and project changes (e.g., construction). As appropriate to fit the data at a given location/station, updates included revising the existing rating curve and developing two separate rating curves for a target station to represent different characteristics.
 
@@ -144,7 +144,7 @@ Daily tributary discharge time series were processed for 34 stations (Figure 1, 
 
 #### Rating Curve Evaluation
 
-For the 12 stations with rating curves, stations that continued to have a good fit with the original rating curve, such as at Mermenatau River at Perry (Figure 1), were not changed and the same rating curve was applied to the expanded time series.
+For the 12 stations with rating curves, stations that continued to have a good fit with the original rating curve, such as at Mermentau River at Perry (Figure 1), were not changed and the same rating curve was applied to the expanded time series.
 
 For Bayou Lafourche (USGS 07381000), the fit of the rating curve to the data decreased to an R2 of 0.06 (Table 1) for the expanded time series. The stage (H) and discharge (Q) relationship showed two distinct patterns. The change in the relationship is assumed to be caused by dredging in Bayou Lafourche that occurred in 2016 for the Mississippi Reintroduction into Bayou Lafourche project, which removed almost 800,000 cubic yards of sediment between Belle Rose and Napoleonville ([A45627AB-88F0-48BD-8969-868E28FDC540.Pump-Station-Groundbreaking-Handouts-revised-10.20.22-2.pdf](https://coastal.la.gov/wp-content/uploads/2022/10/A45627AB-88F0-48BD-8969-868E28FDC540.Pump-Station-Groundbreaking-Handouts-revised-10.20.22-2.pdf)). Therefore, two rating curves were developed, with one fit prior to 2016 and the other after 2016 (Figure 2).
 
@@ -188,6 +188,43 @@ This document was developed in support of the 2029 Coastal Master Plan under the
 
 • Coastal Protection and Restoration Authority (CPRA) – Ashley Cobb, Jessica Converse, Katie Freer, Elizabeth Jarrell, Valencia Henderson, Sam Martin and Eric White  
 • University of New Orleans – Denise Reed
-### Rating Curve Evaluation
 
+## Appendix
+### Discharge Figures
+
+
+| Figure | File |
+|---|---|
+| Amite River near Denham Springs, LA (USGS 07378500) | [PNG](Plots_Discharge/Amite_River_near_Denham_Springs,_LA_07378500_discharge.png) |
+| Atchafalaya River at Simmesport, LA (USGS 07381490) | [PNG](Plots_Discharge/Atchafalaya_River_at_Simmesport,_LA_07381490_discharge.png) |
+| Bayou Lacassine near Lake Arthur, LA (USGS 08012470) | [PNG](Plots_Discharge/Bayou_Lacassine_near_Lake_Arthur_LA_08012470_discharge.png) |
+| Bayou Lafourche at Thibodeaux, LA (USGS 07381000) | [PNG](Plots_Discharge/Bayou_Lafourche_at_Thibodeaux_LA_07381000_discharge.png) |
+| Bayou Teche at Adeline Bridge near Jeanerette, LA (USGS 07385765) | [PNG](Plots_Discharge/Bayou_Teche_at_Adeline_Bridge_near_Jeanerette,_LA_07385765_discharge.png) |
+| Biloxi River at Wortham, MS (USGS 02481000) | [PNG](Plots_Discharge/Biloxi_River_at_Wortham,_MS_02481000_discharge.png) |
+| Bogue Chitto near Bush, LA (USGS 02492000) | [PNG](Plots_Discharge/Bogue_Chitto_near_Bush,_LA_02492000_discharge.png) |
+| Caernarvon (USGS 295124089542100) | [PNG](Plots_Discharge/Caernarvon_295124089542100_discharge.png) |
+| Calcasieu River near Glenmora, LA (USGS 08013000) | [PNG](Plots_Discharge/Calcasieu_River_near_Glenmora,_LA_08013000_discharge.png) |
+| Calcasieu River near Kinder, LA (USGS 08015500) | [PNG](Plots_Discharge/Calcasieu_River_near_Kinder,_LA_08015500_discharge.png) |
+| Charenton Drainage Canal at Baldwin, LA (USGS 07385790) | [PNG](Plots_Discharge/Charenton_Drainage_Canal_at_Baldwin,_LA_07385790_discharge.png) |
+| Davis Pond (USGS 295501090190400) | [PNG](Plots_Discharge/Davis_Pond_295501090190400_discharge.png) |
+| GIWW at Bayou Sale Ridge near Franklin, LA (USGS 07381670) | [PNG](Plots_Discharge/GIWW_at_Bayou_Sale_Ridge_near_Franklin,_LA_07381670_discharge.png) |
+| GIWW at Houma, LA (USGS 07381331) | [PNG](Plots_Discharge/GIWW_at_Houma,_LA_07381331_discharge.png) |
+| GIWW West of Bayou Lafourche at Larose, LA (USGS 07381235) | [PNG](Plots_Discharge/GIWW_West_of_Bayou_Lafourche_at_Larose,_LA_07381235_discharge.png) |
+| Mermentau River at Mermentau, LA (USGS 08012150) | [PNG](Plots_Discharge/Mermentau_River_at_Mermentau,_LA_08012150_discharge.png) |
+| Mississippi River at Tarbert Landing (USGS 01100) | [PNG](Plots_Discharge/Mississippi_River_at_Tarbert_Landing_01100_discharge.png) |
+| Mobile River at River Mile 31 at Bucks, AL (USGS 02470629) | [PNG](Plots_Discharge/Mobile_River_at_River_Mile_31_at_Bucks,_AL_02470629_discharge.png) |
+| Natalbany River at Baptist, LA (USGS 07376500) | [PNG](Plots_Discharge/Natalbany_River_at_Baptist,_LA_07376500_discharge.png) |
+| Neches River at Beaumont, TX (USGS 08041780) | [PNG](Plots_Discharge/Neches_River_at_Beaumont,_TX_08041780_discharge.png) |
+| Neches River at Evadale, TX (USGS 08041000) | [PNG](Plots_Discharge/Neches_River_at_Evadale,_TX_08041000_discharge.png) |
+| Pascagoula River at Merrill, MS (USGS 02479000) | [PNG](Plots_Discharge/Pascagoula_River_at_Merrill,_MS_02479000_discharge.png) |
+| Pearl River near Bogalusa, LA (USGS 02489500) | [PNG](Plots_Discharge/Pearl_River_near_Bogalusa,_LA_02489500_discharge.png) |
+| Sabine River at Ruliff, TX (USGS 08030500) | [PNG](Plots_Discharge/Sabine_River_at_Ruliff,_TX_08030500_discharge.png) |
+| Tangipahoa River at Robert, LA (USGS 07375500) | [PNG](Plots_Discharge/Tangipahoa_River_at_Robert,_LA_07375500_discharge.png) |
+| Tchefuncte River near Folsom, LA (USGS 07375000) | [PNG](Plots_Discharge/Tchefuncte_River_near_Folsom,_LA_07375000_discharge.png) |
+| Tensaw River near Mount Vernon, AL (USGS 02471019) | [PNG](Plots_Discharge/Tensaw_River_near_Mount_Vernon,_AL_02471019_discharge.png) |
+| Tickfaw River at Holden, LA (USGS 07376000) | [PNG](Plots_Discharge/Tickfaw_River_at_Holden,_LA_07376000_discharge.png) |
+| Vermilion River at Perry, LA (USGS 07386980) | [PNG](Plots_Discharge/Vermilion_River_at_Perry,_LA_07386980_discharge.png) |
+| Vermilion River at Surrey St at Lafayette, LA (USGS 07386880) | [PNG](Plots_Discharge/Vermilion_River_at_Surrey_St_at_Lafayette,_LA_07386880_discharge.png) |
+| Wax Lake Outlet at Calumet, LA (USGS 07381590) | [PNG](Plots_Discharge/Wax_Lake_Outlet_at_Calumet,_LA_07381590_discharge.png) |
+| Wolf River near Landon, MS (USGS 02481510) | [PNG](Plots_Discharge/Wolf_River_near_Landon,_MS_02481510_discharge.png) |
 
