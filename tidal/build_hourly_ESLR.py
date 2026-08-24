@@ -5,8 +5,17 @@ import datetime as dt
 eslr_2010_2020_mm = 4.9471*(2020-2010)     #GOMA ESLR rate = 4.971 mm/yr (calculated in Feb 2025 from seasonally-adjusted NOAA satellite altimetery data - see Scenarios ESLR spreadsheet)
 eslr_offset = eslr_2010_2020_mm / 1000
 
-s = 'ssp2-4.5-50th'
-ESLR_column = -2
+#s = 'S34_ssp2-4.5-50th'
+#ESLR_column = -5
+#s = 'S35_ssp2-4.5-95th'
+#ESLR_column = -4
+#s = 'S36_ssp2-4.5-5th'
+#ESLR_column = -3
+#s = 'S37_ssp2-4.5-17th'
+#ESLR_column = -2
+s = 'S38_ssp2-4.5-83rd'
+ESLR_column = -1
+
 
 
 startyear = 2025
